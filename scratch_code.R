@@ -5,7 +5,7 @@
 #ADW in the house.
 
 <<<<<<< HEAD
-#Sam was here
+#Sam was here 2x
 =======
 
 #Jose is here
