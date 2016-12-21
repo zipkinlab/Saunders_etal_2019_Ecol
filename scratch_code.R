@@ -4,9 +4,15 @@
 
 #ADW in the house.
 
-<<<<<<< HEAD
+
 #Sam was here 2x
-=======
+
 
 #Jose is here
->>>>>>> 670705b2bad98711b36eee56b35fa269e15f2d69
+
+# Christie was also here. Working at the same time as Matt. 
+#Let's see what happens
+#Matt's turn
+x<-0
+while(x < 1){
+  x<-0
