@@ -12,7 +12,7 @@
 
 # Christie was also here. Working at the same time as Matt. 
 #Let's see what happens
-#Matt's turn
+#Matt's turn to try!
 x<-0
 while(x < 1){
   x<-0
