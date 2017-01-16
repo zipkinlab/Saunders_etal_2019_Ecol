@@ -1,5 +1,5 @@
 # Integrated Population Model for American Black Ducks
-# Todd Arnold, Univ. of Minnesota, arnol065@umn.edu
+# Todd Arnold, Univ. of Minnesota, arnol065@umn.edu (code sent 1/13/17)
 rm(list=ls(all=TRUE)) # clear memory
 
 # load R2WinBUGS, set working directory for data and output, and identify WinBUGS location for your computer
