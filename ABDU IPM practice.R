@@ -5,6 +5,7 @@ rm(list=ls(all=TRUE)) # clear memory
 # load R2WinBUGS, set working directory for data and output, and identify WinBUGS location for your computer
 library(R2WinBUGS)  
 library(R2jags)
+library(jagsUI)
 setwd("C:/Users/arnol065/Documents/BUGS/ABDU IPM") 
 bugs.dir <- "C:/WinBUGS/WinBUGS14" 
 
@@ -33,8 +34,8 @@ for (i in 1:20){
 } #i
 
 # banding data consists of 6 40x21 m-arrays, JuvF, AdF, UnkF (postseason bandings), JuvM, AdM, UnkM
-  # doubling of rows due to postseason (odd) and preseason (even) bandings
-  # no unk in preseason samples, so unk arrays include empty rows 
+# doubling of rows due to postseason (odd) and preseason (even) bandings
+# no unk in preseason samples, so unk arrays include empty rows 
 # m-arrays start in 1969 postseason (Jan-Mar) and move in 6 month increments to preseason 1988
 # column 21 is banded birds never recovered (total releases is SUM ROW TOTAL) 
 
@@ -49,20 +50,20 @@ marr.juvF.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
 for (i in 1:40){
   for (j in 1:21){
     marr.juvF.shot[i,j] <- banding[i,j]}
-banded[i,1]<-sum(marr.juvF.shot[i,])}
+  banded[i,1]<-sum(marr.juvF.shot[i,])}
 
 marr.adF.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
 for (i in 1:40){
   for (j in 1:21){
     marr.adF.shot[i,j] <- banding[(i+40),j]}
-banded[i,2]<-sum(marr.adF.shot[i,])}
+  banded[i,2]<-sum(marr.adF.shot[i,])}
 
 marr.unkF.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
 for (i in 1:40){
   for (j in 1:21){
     marr.unkF.shot[i,j] <- banding[(i+80),j]}
-banded[i,3]<-sum(marr.unkF.shot[i,])
-banded[i,4]<-sum(banded[i,1:3])}  # total bandings
+  banded[i,3]<-sum(marr.unkF.shot[i,])
+  banded[i,4]<-sum(banded[i,1:3])}  # total bandings
 
 # merge adult and unknown for models with no age variation during summer S
 marr.ad_unkF.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
@@ -81,20 +82,20 @@ marr.juvM.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
 for (i in 1:40){
   for (j in 1:21){
     marr.juvM.shot[i,j] <- banding[(i+120),j]}
-banded[i,5]<-sum(marr.juvM.shot[i,])}
+  banded[i,5]<-sum(marr.juvM.shot[i,])}
 
 marr.adM.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
 for (i in 1:40){
   for (j in 1:21){
     marr.adM.shot[i,j] <- banding[(i+160),j]}
-banded[i,6]<-sum(marr.adM.shot[i,])}
+  banded[i,6]<-sum(marr.adM.shot[i,])}
 
 marr.unkM.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
 for (i in 1:40){
   for (j in 1:21){
     marr.unkM.shot[i,j] <- banding[(i+200),j]}
-banded[i,7]<-sum(marr.unkM.shot[i,])
-banded[i,8]<-sum(banded[i,5:7])}
+  banded[i,7]<-sum(marr.unkM.shot[i,])
+  banded[i,8]<-sum(banded[i,5:7])}
 
 marr.ad_unkM.shot <- matrix(0,nrow=40,ncol=21,byrow=TRUE)
 for (i in 1:40){
@@ -131,7 +132,7 @@ cat("
     pi.Can.juv.mu ~ dunif(-1, 3)       
     pi.Can.juvF.mu ~ dunif(-1, 1)     
     pi.Can.adF.mu ~ dunif(-1, 1)      
-
+    
     # Priors and constraints, for logit link on f
     f.pre.juvF.mu ~ dunif(-6, 0)       # priors for mean Brownie recovery (bounded 0, 0.5)
     f.pre.adF.mu ~ dunif(-6, 0)        
@@ -202,12 +203,6 @@ cat("
     
     # Summarize known wing samples
     for (y in 1:yrs){
-    US.known.age[y] <- sum(US.wings[y,7:8])
-    US.sexed.juv[y] <- sum(US.wings[y,4:5])
-    US.sexed.ad[y] <- sum(US.wings[y,1:2])
-    Can.known.age[y] <- sum(Can.wings[y,7:8])
-    Can.sexed.juv[y] <- sum(Can.wings[y,4:5])
-    Can.sexed.ad[y] <- sum(Can.wings[y,1:2])
     US.wings[y,8] ~ dbin(pi.US.juv[y],US.known.age[y])
     US.wings[y,4] ~ dbin(pi.US.juvF[y],US.sexed.juv[y])
     US.wings[y,1] ~ dbin(pi.US.adF[y],US.sexed.ad[y])
@@ -266,7 +261,11 @@ sink()
 # Bundle data  # marr.unkF.shot=marr.unkF.shot, marr.unkM.shot=marr.unkM.shot, 
 bugs.data <- list(US.Harvest=US.harvest, Can.Harvest=Can.harvest, US.wings=US.wings, Can.wings=Can.wings, banded=banded, 
                   marr.juvF.shot=marr.juvF.shot, marr.adF.shot=marr.adF.shot, marr.combF.shot=marr.combF.shot, 
-                  marr.juvM.shot=marr.juvM.shot, marr.adM.shot=marr.adM.shot, marr.combM.shot=marr.combM.shot, yrs = 20)
+                  marr.juvM.shot=marr.juvM.shot, marr.adM.shot=marr.adM.shot, marr.combM.shot=marr.combM.shot, yrs = 20,
+                  US.known.age = US.wings[,7]+US.wings[,8], US.sexed.juv = US.wings[,4]+US.wings[,5],
+                  US.sexed.ad = US.wings[,1]+US.wings[,2], Can.known.age = Can.wings[,7]+Can.wings[,8],
+                  Can.sexed.juv = Can.wings[,4]+Can.wings[,5], Can.sexed.ad = Can.wings[,1]+Can.wings[,2])
+
 
 # Initial values (not all priors listed)
 inits <- function(){list(pi.US.juv.mu = runif(1, -1, 1), pi.US.juvF.mu = runif(1, -1, 1), pi.US.adF.mu = runif(1, -1, 1),
@@ -281,33 +280,42 @@ parameters <- c("Harv.JuvF.Total","Harv.JuvM.Total","Harv.AdF.Total","Harv.AdM.T
 
 # MCMC settings (90 sec, converges rapidly, great mixing)
 ni <- 25000
-nt <- 1
+nt <- 6        #10,000 posterior samples
 nb <- 5000
 nc <- 3
 
-# Call WinBUGS from R (82 sec, this part is very fast, nice mixing, converges well, but jags version doesn't work)
+# Call WinBUGS from R (82 sec, this part is very fast, nice mixing, converges well)
 ABDU.Lincoln.bug <- bugs(bugs.data, inits, parameters, "Lincoln.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, debug = TRUE, bugs.directory = bugs.dir, working.directory = getwd())
 print(ABDU.Lincoln.bug, digits = 4)
 
+ABDU.Lincoln.jags <- jagsUI(bugs.data, inits, parameters, "Lincoln.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb)
+print(ABDU.Lincoln.jags, digits = 3)
+
+names(ABDU.Lincoln.bug$sims.list)
+hist(ABDU.Lincoln.bug$sims.list$N.juvF.fall[,1])
+hist(ABDU.Lincoln.bug$sims.list$sex.ratio.ad.fall[,19])
+hist(ABDU.Lincoln.bug$sims.list$fecundity[,19])
+
+
 # save Lincoln output to data file (might be easier if I truncated N and coverted SD to tau here)
 for (y in 1:20){
-  Lincoln.out[y,1]=ABDU.Lincoln.bug$mean$N.juvF.fall[y]
-  Lincoln.out[y,2]=ABDU.Lincoln.bug$sd$N.juvF.fall[y]
-  Lincoln.out[y,3]=ABDU.Lincoln.bug$mean$N.juvM.fall[y]
-  Lincoln.out[y,4]=ABDU.Lincoln.bug$sd$N.juvM.fall[y]
-  Lincoln.out[y,5]=ABDU.Lincoln.bug$mean$N.adF.fall[y]
-  Lincoln.out[y,6]=ABDU.Lincoln.bug$sd$N.adF.fall[y]
-  Lincoln.out[y,7]=ABDU.Lincoln.bug$mean$N.adM.fall[y]
-  Lincoln.out[y,8]=ABDU.Lincoln.bug$sd$N.adM.fall[y]
-  Lincoln.out[y,9]=ABDU.Lincoln.bug$mean$N.combF.spring[y]
-  Lincoln.out[y,10]=ABDU.Lincoln.bug$sd$N.combF.spring[y]
-  Lincoln.out[y,11]=ABDU.Lincoln.bug$mean$N.combM.spring[y]
-  Lincoln.out[y,12]=ABDU.Lincoln.bug$sd$N.combM.spring[y]
+  Lincoln.out[y,1]=trunc(ABDU.Lincoln.bug$mean$N.juvF.fall[y])
+  Lincoln.out[y,2]=trunc(ABDU.Lincoln.bug$sd$N.juvF.fall[y])
+  Lincoln.out[y,3]=trunc(ABDU.Lincoln.bug$mean$N.juvM.fall[y])
+  Lincoln.out[y,4]=trunc(ABDU.Lincoln.bug$sd$N.juvM.fall[y])
+  Lincoln.out[y,5]=trunc(ABDU.Lincoln.bug$mean$N.adF.fall[y])
+  Lincoln.out[y,6]=trunc(ABDU.Lincoln.bug$sd$N.adF.fall[y])
+  Lincoln.out[y,7]=trunc(ABDU.Lincoln.bug$mean$N.adM.fall[y])
+  Lincoln.out[y,8]=trunc(ABDU.Lincoln.bug$sd$N.adM.fall[y])
+  Lincoln.out[y,9]=trunc(ABDU.Lincoln.bug$mean$N.combF.spring[y])
+  Lincoln.out[y,10]=trunc(ABDU.Lincoln.bug$sd$N.combF.spring[y])
+  Lincoln.out[y,11]=trunc(ABDU.Lincoln.bug$mean$N.combM.spring[y])
+  Lincoln.out[y,12]=trunc(ABDU.Lincoln.bug$sd$N.combM.spring[y])
   Lincoln.out[y,13]=ABDU.Lincoln.bug$mean$fecundity[y]
   Lincoln.out[y,14]=ABDU.Lincoln.bug$sd$fecundity[y]
-  Lincoln.out[y,15]=(ABDU.Lincoln.bug$mean$N.adF.fall[y]+ABDU.Lincoln.bug$mean$N.adF.fall[y])
+  Lincoln.out[y,15]=trunc(ABDU.Lincoln.bug$mean$N.adF.fall[y]+ABDU.Lincoln.bug$mean$N.adF.fall[y])
   Lincoln.out[y,16]=sqrt((ABDU.Lincoln.bug$sd$N.adF.fall[y])^2+(ABDU.Lincoln.bug$sd$N.adF.fall[y])^2)
-  Lincoln.out[y,17]=(ABDU.Lincoln.bug$mean$N.adM.fall[y]+ABDU.Lincoln.bug$mean$N.adM.fall[y])
+  Lincoln.out[y,17]=trunc(ABDU.Lincoln.bug$mean$N.adM.fall[y]+ABDU.Lincoln.bug$mean$N.adM.fall[y])
   Lincoln.out[y,18]=sqrt((ABDU.Lincoln.bug$sd$N.adM.fall[y])^2+(ABDU.Lincoln.bug$sd$N.adM.fall[y])^2)
 }
 
@@ -325,6 +333,7 @@ log(Lincoln.out[1,11])-log(Lincoln.out[1,11]-Lincoln.out[1,12]) #lower SD on log
 #----------------------------------------------------------------------------------------
 # Part 1.b 
 # Generate fecundity estimates from age-ratios at capture
+# Note that these are biased unrealistically high, don't use them as estimates of F
 #----------------------------------------------------------------------------------------
 live.recaps <- read.csv("live.recaptures.csv",header=TRUE)
 head(live.recaps)
@@ -334,35 +343,35 @@ sink("age_ratio.bug")
 cat("
     model {
     
-# Priors and constraints
-  p.jf ~ dunif(0, 1)         # Vague uniform prior for juv. first year recapture rate
-  p.af ~ dunif(0, 1)         
-  p.jm ~ dunif(0, 1)         
-  p.am ~ dunif(0, 1)         
+    # Priors and constraints
+    p.jf ~ dunif(0, 1)         # Vague uniform prior for juv. first year recapture rate
+    p.af ~ dunif(0, 1)         
+    p.jm ~ dunif(0, 1)         
+    p.am ~ dunif(0, 1)         
     
-# summarize total bandings
-for (y in 1:yrs){
-  jf.banded[y] <- banded[y*2,1]
-  af.banded[y] <- banded[y*2,2]
-  jm.banded[y] <- banded[y*2,5]
-  am.banded[y] <- banded[y*2,6]
-  }
-
-N.banded.jf <- sum(jf.banded[])
-N.banded.af <- sum(af.banded[])
-N.banded.jm <- sum(jm.banded[])
-N.banded.am <- sum(am.banded[])
-
-# vulnerability adjustments, single value for all years
-  recap.jf ~ dbin(p.jf,N.banded.jf)
-  recap.af ~ dbin(p.af,N.banded.af)
-  recap.jm ~ dbin(p.jm,N.banded.jm)
-  recap.am ~ dbin(p.am,N.banded.am)
-  vuln.jf <- p.jf/p.af
-  vuln.jm <- p.jm/p.af
-
-# Annual fecundity estimates
-for (y in 1:yrs){
+    # summarize total bandings
+    for (y in 1:yrs){
+    jf.banded[y] <- banded[y*2,1]
+    af.banded[y] <- banded[y*2,2]
+    jm.banded[y] <- banded[y*2,5]
+    am.banded[y] <- banded[y*2,6]
+    }
+    
+    #N.banded.jf <- sum(jf.banded[])
+    #N.banded.af <- sum(af.banded[])
+    #N.banded.jm <- sum(jm.banded[])
+    #N.banded.am <- sum(am.banded[])
+    
+    # vulnerability adjustments, single value for all years
+    recap.jf ~ dbin(p.jf,N.banded.jf)
+    recap.af ~ dbin(p.af,N.banded.af)
+    recap.jm ~ dbin(p.jm,N.banded.jm)
+    recap.am ~ dbin(p.am,N.banded.am)
+    vuln.jf <- p.jf/p.af
+    vuln.jm <- p.jm/p.af
+    
+    # Annual fecundity estimates
+    for (y in 1:yrs){
     F.jf[y] <- (jf.banded[y]/af.banded[y])/(p.jf/p.af)
     F.jm[y] <- (jm.banded[y]/af.banded[y])/(p.jm/p.af)
     } #y
@@ -372,7 +381,11 @@ sink()
 
 # Bundle data  # marr.unkF.shot=marr.unkF.shot, marr.unkM.shot=marr.unkM.shot, 
 bugs.data <- list(banded=banded, recap.jf=sum(live.recaps[,2]), recap.af=sum(live.recaps[,3]), 
-                  recap.jm=sum(live.recaps[,4]), recap.af=sum(live.recaps[,5]), yrs = 20)
+                  recap.jm=sum(live.recaps[,4]), recap.am=sum(live.recaps[,5]), yrs = 20,
+                  N.banded.jf = sum(banded[,1]),
+                  N.banded.af = sum(banded[,2]),
+                  N.banded.jm = sum(banded[,5]),
+                  N.banded.am = sum(banded[,6]))
 
 # Initial values 
 inits <- function(){list(p.jf = runif(1, 0, 1), p.af = runif(1, 0, 1), 
@@ -391,6 +404,10 @@ nc <- 3
 age_ratio.bug <- bugs(bugs.data, inits, parameters, "age_ratio.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, debug = TRUE, bugs.directory = bugs.dir, working.directory = getwd())
 print(age_ratio.bug, digits = 4)
 
+age_ratio.jags <- jagsUI(bugs.data, inits, parameters, "age_ratio.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb)
+print(age_ratio.jags, digits = 4)
+
+
 age_ratio.out <- matrix(NA, nrow = 20, ncol = 2) 
 for (y in 1:20){
   age.ratio.out[y,1]=age_ratio.bug$mean$F.jf[y]
@@ -406,86 +423,86 @@ for (y in 1:20){
 
 sink("ABDU.log_SS.bug")  
 cat("
-model {
+    model {
     
-N.adF.spring[1] ~ dnorm(13.77,167) # observed initial Lincoln estimates and precision (log scale)
-N.adM.spring[1] ~ dnorm(13.85,286)
-
-m.adF.sum.mu ~ dunif(-1,0)    # instantaneous mortality rate, adF sum to fall 
-m.adM.sum.mu ~ dunif(-1,0)
-m.adF.win.mu ~ dunif(-1,0)
-m.adM.win.mu ~ dunif(-1,0)
-f.adF_juvF.mu ~ dunif(-2,2)      # fecundity rate, AdF to JuvF
-f.adF_juvM.mu ~ dunif(-2,2)      # fecundity rate, AdF to JuvM
-
-m.adF.sum.sd ~ dunif(0,0.5)     # sd of vital rates on log scale 
-m.adM.sum.sd ~ dunif(0,0.5)
-m.adF.win.sd ~ dunif(0,0.5)
-m.adM.win.sd ~ dunif(0,0.5)
-f.adF_juvF.sd ~ dunif(0,0.5)    
-f.adF_juvM.sd ~ dunif(0,0.5)    
-
-m.adF.sum.tau <- pow(m.adF.sum.sd,-2) 
-m.adM.sum.tau <- pow(m.adM.sum.sd,-2)
-m.adF.win.tau <- pow(m.adF.win.sd,-2)
-m.adM.win.tau <- pow(m.adM.win.sd,-2)
-f.adF_juvF.tau <- pow(f.adF_juvF.sd,-2) 
-f.adF_juvM.tau <- pow(f.adF_juvM.sd,-2)
-
-for (y in 1:yrs){
- m.adF.sum[y] ~ dnorm(m.adF.sum.mu,m.adF.sum.tau)
- m.adM.sum[y] ~ dnorm(m.adM.sum.mu,m.adM.sum.tau)
- m.adF.win[y] ~ dnorm(m.adF.win.mu,m.adF.win.tau) 
- m.adM.win[y] ~ dnorm(m.adM.win.mu,m.adM.win.tau) 
- f.adF_juvF[y] ~ dnorm(f.adF_juvF.mu,f.adF_juvF.tau) 
- f.adF_juvM[y] ~ dnorm(f.adF_juvM.mu,f.adF_juvM.tau) 
-}
-
-# Likelihood
-# State process (estimate fall parameters only in year 1)
-  N.adF.fall[1] <- N.adF.spring[1] + m.adF.sum[1]
-  N.adM.fall[1] <- N.adM.spring[1] + m.adM.sum[1]
-  N.juvF[1] <- N.adF.fall[1] + f.adF_juvF[1]
-  N.juvM[1] <- N.adF.fall[1] + f.adF_juvM[1]
-
-for (t in 2:yrs){
-  N.adF.spring[t] <- log(exp(N.adF.fall[t-1]) + exp(N.juvF[t-1])) + m.adF.win[t-1]
-  N.adM.spring[t] <- log(exp(N.adM.fall[t-1]) + exp(N.juvM[t-1])) + m.adM.win[t-1]
-  N.adF.fall[t] <- N.adF.spring[t] + m.adF.sum[t]
-  N.adM.fall[t] <- N.adM.spring[t] + m.adM.sum[t]
-  N.juvF[t] <- N.adF.fall[t] + f.adF_juvF[t]
-  N.juvM[t] <- N.adF.fall[t] + f.adF_juvM[t]
-  }
-
-# Observation process
-for (t in 1:yrs) {
-  juvF.obs[t] ~ dnorm(N.juvF[t], juvF.tau[t]) 
-  juvM.obs[t] ~ dnorm(N.juvM[t], juvM.tau[t]) 
-  adF.fall.obs[t] ~ dnorm(N.adF.fall[t], adF.fall.tau[t]) 
-  adM.fall.obs[t] ~ dnorm(N.adM.fall[t], adM.fall.tau[t]) 
-  adF.spring.obs[t] ~ dnorm(N.adF.spring[t], adF.spring.tau[t]) 
-  adM.spring.obs[t] ~ dnorm(N.adM.spring[t], adM.spring.tau[t]) 
-}
-
-# back transform derived parameters
-for (t in 1:yrs) {
-  juvF.pred[t] <- exp(N.juvF[t]) 
-  juvM.pred[t] <- exp(N.juvM[t]) 
-  adF.fall.pred[t] <- exp(N.adF.fall[t]) 
-  adM.fall.pred[t] <- exp(N.adM.fall[t]) 
-  adF.spring.pred[t] <- exp(N.adF.spring[t]) 
-  adM.spring.pred[t] <- exp(N.adM.spring[t]) 
-  total.fall.pred[t] <- juvF.pred[t]+juvM.pred[t]+adF.fall.pred[t]+adM.fall.pred[t]
-  total.spring.pred[t] <- adF.spring.pred[t]+adM.spring.pred[t]
-}
-
-for (t in 1:(yrs-1)) {
-  lambda.spring[t] <- total.spring.pred[t+1]/total.spring.pred[t]
-  lambda.fall[t] <- total.fall.pred[t+1]/total.fall.pred[t]
-}
-
-}    
-",fill=TRUE)
+    N.adF.spring[1] ~ dnorm(13.77,167) # observed initial Lincoln estimates and precision (log scale)
+    N.adM.spring[1] ~ dnorm(13.85,286)
+    
+    m.adF.sum.mu ~ dunif(-1,0)    # instantaneous mortality rate, adF sum to fall 
+    m.adM.sum.mu ~ dunif(-1,0)
+    m.adF.win.mu ~ dunif(-1,0)
+    m.adM.win.mu ~ dunif(-1,0)
+    f.adF_juvF.mu ~ dunif(-2,2)      # fecundity rate, AdF to JuvF
+    f.adF_juvM.mu ~ dunif(-2,2)      # fecundity rate, AdF to JuvM
+    
+    m.adF.sum.sd ~ dunif(0,0.5)     # sd of vital rates on log scale 
+    m.adM.sum.sd ~ dunif(0,0.5)
+    m.adF.win.sd ~ dunif(0,0.5)
+    m.adM.win.sd ~ dunif(0,0.5)
+    f.adF_juvF.sd ~ dunif(0,0.5)    
+    f.adF_juvM.sd ~ dunif(0,0.5)    
+    
+    m.adF.sum.tau <- pow(m.adF.sum.sd,-2) 
+    m.adM.sum.tau <- pow(m.adM.sum.sd,-2)
+    m.adF.win.tau <- pow(m.adF.win.sd,-2)
+    m.adM.win.tau <- pow(m.adM.win.sd,-2)
+    f.adF_juvF.tau <- pow(f.adF_juvF.sd,-2) 
+    f.adF_juvM.tau <- pow(f.adF_juvM.sd,-2)
+    
+    for (y in 1:yrs){
+    m.adF.sum[y] ~ dnorm(m.adF.sum.mu,m.adF.sum.tau)
+    m.adM.sum[y] ~ dnorm(m.adM.sum.mu,m.adM.sum.tau)
+    m.adF.win[y] ~ dnorm(m.adF.win.mu,m.adF.win.tau) 
+    m.adM.win[y] ~ dnorm(m.adM.win.mu,m.adM.win.tau) 
+    f.adF_juvF[y] ~ dnorm(f.adF_juvF.mu,f.adF_juvF.tau) 
+    f.adF_juvM[y] ~ dnorm(f.adF_juvM.mu,f.adF_juvM.tau) 
+    }
+    
+    # Likelihood
+    # State process (estimate fall parameters only in year 1)
+    N.adF.fall[1] <- N.adF.spring[1] + m.adF.sum[1]
+    N.adM.fall[1] <- N.adM.spring[1] + m.adM.sum[1]
+    N.juvF[1] <- N.adF.fall[1] + f.adF_juvF[1]
+    N.juvM[1] <- N.adF.fall[1] + f.adF_juvM[1]
+    
+    for (t in 2:yrs){
+    N.adF.spring[t] <- log(exp(N.adF.fall[t-1]) + exp(N.juvF[t-1])) + m.adF.win[t-1]
+    N.adM.spring[t] <- log(exp(N.adM.fall[t-1]) + exp(N.juvM[t-1])) + m.adM.win[t-1]
+    N.adF.fall[t] <- N.adF.spring[t] + m.adF.sum[t]
+    N.adM.fall[t] <- N.adM.spring[t] + m.adM.sum[t]
+    N.juvF[t] <- N.adF.fall[t] + f.adF_juvF[t]
+    N.juvM[t] <- N.adF.fall[t] + f.adF_juvM[t]
+    }
+    
+    # Observation process
+    for (t in 1:yrs) {
+    juvF.obs[t] ~ dnorm(N.juvF[t], juvF.tau[t]) 
+    juvM.obs[t] ~ dnorm(N.juvM[t], juvM.tau[t]) 
+    adF.fall.obs[t] ~ dnorm(N.adF.fall[t], adF.fall.tau[t]) 
+    adM.fall.obs[t] ~ dnorm(N.adM.fall[t], adM.fall.tau[t]) 
+    adF.spring.obs[t] ~ dnorm(N.adF.spring[t], adF.spring.tau[t]) 
+    adM.spring.obs[t] ~ dnorm(N.adM.spring[t], adM.spring.tau[t]) 
+    }
+    
+    # back transform derived parameters
+    for (t in 1:yrs) {
+    juvF.pred[t] <- exp(N.juvF[t]) 
+    juvM.pred[t] <- exp(N.juvM[t]) 
+    adF.fall.pred[t] <- exp(N.adF.fall[t]) 
+    adM.fall.pred[t] <- exp(N.adM.fall[t]) 
+    adF.spring.pred[t] <- exp(N.adF.spring[t]) 
+    adM.spring.pred[t] <- exp(N.adM.spring[t]) 
+    total.fall.pred[t] <- juvF.pred[t]+juvM.pred[t]+adF.fall.pred[t]+adM.fall.pred[t]
+    total.spring.pred[t] <- adF.spring.pred[t]+adM.spring.pred[t]
+    }
+    
+    for (t in 1:(yrs-1)) {
+    lambda.spring[t] <- total.spring.pred[t+1]/total.spring.pred[t]
+    lambda.fall[t] <- total.fall.pred[t+1]/total.fall.pred[t]
+    }
+    
+    }    
+    ",fill=TRUE)
 sink()
 
 # Bundle data 
@@ -527,7 +544,7 @@ nc <- 3
 #print(ABDU.log_SS.out,digits=2)
 
 # jags version works well
-ABDU.log_SS.jags <- jags(bugs.data, inits, parameters, "ABDU.log_SS.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb,working.directory=getwd())
+ABDU.log_SS.jags <- jagsUI(bugs.data, inits, parameters, "ABDU.log_SS.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb)
 print(ABDU.log_SS.jags,digits=3)
 
 ##########################
@@ -635,28 +652,26 @@ parameters <- c("S.adF.sum.mu", "S.adF.win.mu","S.adM.sum.mu", "S.adM.win.mu","f
 
 # MCMC settings (use 150,000 ni, 50,000 nb)
 # minimal iterations to verify model works
-ni <- 1500
-nt <- 1
-nb <- 500
+ni <- 150000
+nt <- 10
+nb <- 50000
 nc <- 3
 
 # Call jags from R (bugs model doesn't initiate)
-ABDU.Pois_SS.out <- jags(bugs.data, inits, parameters, "ABDU.Pois_SS.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb,working.directory=getwd())
+ABDU.Pois_SS.out <- jagsUI(bugs.data, inits, parameters, "ABDU.Pois_SS.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb)
 print(ABDU.Pois_SS.out,digits=3)
 
 ########################################################################
-# Band recovery model
+# 2-season band recovery model for ABDU
 # Female and Male, Brownie
-# Juvs transition to adults after first 2 semesters, unk start as adult
-# alt working versions toss unk S estimate in first semester or treat unknowns as latent mixture of adult/juvenile survival rates
+# Juvs transition to adults after first winter, unk start as adult
 ########################################################################
 
 sink("ABDU.Brownie1.bug")
 cat("
     model {
     
-    # Priors and constraints, for logit link on S and f
-    ## Loosely informed priors are carryovers from attempts to get this working, but priors weren't the problem 
+    # Priors and constraints, for mean S and f, convert to logit scale
     s.adF.sum.mu ~ dunif(0, 4)          
     s.juvF.win.mu ~ dunif(0, 4)        
     s.adF.win.mu ~ dunif(0, 4)         
@@ -716,70 +731,60 @@ cat("
     logit(f.juvM[y]) <- f.juvM.mu + epsilon.f.juvM[y]
     logit(f.adM[y]) <- f.adM.mu + epsilon.f.adM[y]
     }
-    
-    # Calculate the number of birds released each banding season (releases in all 40 rows)
-    for (t in 1:(2*yrs)){
-# M. Schaub indicated that jags needs total releases to be provided as data
-#    rel.juvF[t] <- sum(marr.juvF.shot[t,])
-#    rel.adF[t] <- sum(marr.ad_unkF.shot[t,])
-#    rel.juvM[t] <- sum(marr.juvM.shot[t,])
-#    rel.adM[t] <- sum(marr.ad_unkM.shot[t,])
-    rel.juvF[t] <- banded[t,1]
-    rel.adF[t] <- banded[t,2]+banded[t,3]
-    rel.juvM[t] <- banded[t,5]
-    rel.adM[t] <- banded[t,6]+banded[t,7]
-    }
+    s.adF.sum[21] <- 1 # dummy values for easier coding
+    s.adM.sum[21] <- 1
     
     # Generate multinomial likelihoods for m-arrays
     for (t in 1:(2*yrs)){
     marr.juvF.shot[t,1:(yrs+1)] ~ dmulti(pr.juvF.shot[t,], rel.juvF[t])
     marr.ad_unkF.shot[t,1:(yrs+1)] ~ dmulti(pr.adF.shot[t,], rel.adF[t])
-    marr.juvM.shot[t,1:(yrs+1)] ~ dmulti(pr.juvM.shot[t,], rel.juvF[t])
-    marr.ad_unkM.shot[t,1:(yrs+1)] ~ dmulti(pr.adM.shot[t,], rel.adF[t])
+    marr.juvM.shot[t,1:(yrs+1)] ~ dmulti(pr.juvM.shot[t,], rel.juvM[t])
+    marr.ad_unkM.shot[t,1:(yrs+1)] ~ dmulti(pr.adM.shot[t,], rel.adM[t])
     }
     
     # Define cell probabilities of the m-arrays
     for (y in 1:yrs){   
-    # probability of surviving to start of hunting season
-    surv.juvF[2*y-1,y] <- s.adF.sum[y]  # treating juvs as adults in 2nd semester
-    surv.juvF[2*y,y] <- 1
-    surv.adF[2*y-1,y] <- s.adF.sum[y]
-    surv.adF[2*y,y] <- 1
-    surv.juvM[2*y-1,y] <- s.adM.sum[y]
-    surv.juvM[2*y,y] <- 1
-    surv.adM[2*y-1,y] <- s.adM.sum[y]
-    surv.adM[2*y,y] <- 1
+    # model prob direct recovery in season [y] (winter banded birds must survive the summer (at adult rates))
+    pr.juvF.shot[2*y-1,y] <- s.adF.sum[y]*f.adF[y]       #yearlings recovered at adult rate
+    pr.juvF.shot[2*y,y] <- 1*f.juvF[y]                   #fall banded recovered at juvenile rate (fixed to 1)
+    pr.adF.shot[2*y-1,y] <- s.adF.sum[y]*f.adF[y]
+    pr.adF.shot[2*y,y] <- 1*f.adF[y]
+    pr.juvM.shot[2*y-1,y] <- s.adM.sum[y]*f.adM[y]
+    pr.juvM.shot[2*y,y] <- 1*f.juvM[y]
+    pr.adM.shot[2*y-1,y] <- s.adM.sum[y]*f.adM[y]
+    pr.adM.shot[2*y,y] <- 1*f.adM[y]
     
-    # model prob direct recovery 
-    pr.juvF.shot[2*y-1,y] <- surv.juvF[2*y-1,y]*f.adF[y]
-    pr.juvF.shot[2*y,y] <- surv.juvF[2*y,y]*f.juvF[y]
-    pr.adF.shot[2*y-1,y] <- surv.adF[2*y-1,y]*f.adF[y]
-    pr.adF.shot[2*y,y] <- surv.adF[2*y,y]*f.adF[y]
-    pr.juvM.shot[2*y-1,y] <- surv.juvM[2*y-1,y]*f.adM[y]
-    pr.juvM.shot[2*y,y] <- surv.juvM[2*y,y]*f.juvM[y]
-    pr.adM.shot[2*y-1,y] <- surv.adM[2*y-1,y]*f.adM[y]
-    pr.adM.shot[2*y,y] <- surv.adM[2*y,y]*f.adM[y]
+    # probability of surviving to start of second hunting season (2*summer+1winter if winter banded, sum & winter otherwise)
+    surv.juvF[2*y-1,y] <- s.adF.sum[y]*s.adF.win[y]*s.adF.sum[y+1]  
+    surv.juvF[2*y,y] <- s.juvF.win[y]*s.adF.sum[y+1]
+    surv.adF[2*y-1,y] <- s.adF.sum[y]*s.adF.win[y]*s.adF.sum[y+1]
+    surv.adF[2*y,y] <- s.adF.win[y]*s.adF.sum[y+1]
+    surv.juvM[2*y-1,y] <- s.adM.sum[y]*s.adM.win[y]*s.adM.sum[y+1]
+    surv.juvM[2*y,y] <- s.juvM.win[y]*s.adM.sum[y+1]
+    surv.adM[2*y-1,y] <- s.adM.sum[y]*s.adM.win[y]*s.adM.sum[y+1]
+    surv.adM[2*y,y] <- s.adM.win[y]*s.adM.sum[y+1]
     
-    # second and subsequent diagonals (all age classes have transitioned to adulthood)
+    # second and subsequent diagonals
     for (k in (y+1):yrs){
+    # model prob recovery = prob survives until k, recovered in k 
+    pr.juvF.shot[2*y-1,k] <- surv.juvF[2*y-1,k-1]*f.adF[k]
+    pr.juvF.shot[2*y,k] <- surv.juvF[2*y,k-1]*f.adF[k]
+    pr.adF.shot[2*y-1,k] <- surv.adF[2*y-1,k-1]*f.adF[k]
+    pr.adF.shot[2*y,k] <- surv.adF[2*y,k-1]*f.adF[k]
+    pr.juvM.shot[2*y-1,k] <- surv.juvM[2*y-1,k-1]*f.adM[k]
+    pr.juvM.shot[2*y,k] <- surv.juvM[2*y,k-1]*f.adM[k]
+    pr.adM.shot[2*y-1,k] <- surv.adM[2*y-1,k-1]*f.adM[k]
+    pr.adM.shot[2*y,k] <- surv.adM[2*y,k-1]*f.adM[k]
+    
+    # survival to next hunting season (all adult survival now)
     surv.juvF[2*y-1,k] <- surv.juvF[2*y-1,k-1]*s.adF.win[k-1]*s.adF.sum[k]
-    surv.juvF[2*y,k] <- surv.juvF[2*y,k-1]*s.juvF.win[k-1]*s.adF.sum[k]
+    surv.juvF[2*y,k] <- surv.juvF[2*y,k-1]*s.adF.win[k-1]*s.adF.sum[k]
     surv.adF[2*y-1,k] <- surv.adF[2*y-1,k-1]*s.adF.win[k-1]*s.adF.sum[k]
     surv.adF[2*y,k] <- surv.adF[2*y,k-1]*s.adF.win[k-1]*s.adF.sum[k]
     surv.juvM[2*y-1,k] <- surv.juvM[2*y-1,k-1]*s.adM.win[k-1]*s.adM.sum[k]
-    surv.juvM[2*y,k] <- surv.juvM[2*y,k-1]*s.juvM.win[k-1]*s.adM.sum[k]
+    surv.juvM[2*y,k] <- surv.juvM[2*y,k-1]*s.adM.win[k-1]*s.adM.sum[k]
     surv.adM[2*y-1,k] <- surv.adM[2*y-1,k-1]*s.adM.win[k-1]*s.adM.sum[k]
     surv.adM[2*y,k] <- surv.adM[2*y,k-1]*s.adM.win[k-1]*s.adM.sum[k]
-    
-    # model prob recovery = prob survives until k, recovered in k 
-    pr.juvF.shot[2*y-1,k] <- surv.juvF[2*y-1,k]*f.adF[k]
-    pr.juvF.shot[2*y,k] <- surv.juvF[2*y,k]*f.adF[k]
-    pr.adF.shot[2*y-1,k] <- surv.juvF[2*y-1,k]*f.adF[k]
-    pr.adF.shot[2*y,k] <- surv.juvF[2*y,k]*f.adF[k]
-    pr.juvM.shot[2*y-1,k] <- surv.juvM[2*y-1,k]*f.adM[k]
-    pr.juvM.shot[2*y,k] <- surv.juvM[2*y,k]*f.adM[k]
-    pr.adM.shot[2*y-1,k] <- surv.juvM[2*y-1,k]*f.adM[k]
-    pr.adM.shot[2*y,k] <- surv.juvM[2*y,k]*f.adM[k]
     } #k
     
     # Left of main diagonal (prob of encounter prior to banding = 0)
@@ -809,7 +814,10 @@ sink()
 
 # Bundle data, pool adult and unk m-arrays since not modeling unique parms on uk
 bugs.data <- list(yrs=20, marr.juvF.shot=marr.juvF.shot, marr.ad_unkF.shot=marr.ad_unkF.shot,
-                  marr.juvM.shot=marr.juvM.shot, marr.ad_unkM.shot=marr.ad_unkM.shot,banded=banded)
+                  marr.juvM.shot=marr.juvM.shot, marr.ad_unkM.shot=marr.ad_unkM.shot, 
+                  rel.juvF = banded[,1], rel.adF = banded[,2]+banded[,3], 
+                  rel.juvM = banded[,5], rel.adM = banded[,6]+banded[,7])
+
 # Initial values
 inits <- function(){list(s.juvF.win.mu=runif(1,0,2), s.adF.sum.mu=runif(1,0,4), 
                          s.adF.win.mu=runif(1,0,2), f.juvF.mu=runif(1,-4,-2),
@@ -834,17 +842,177 @@ parameters <- c("s.juvF.win.mu", "s.adF.sum.mu", "s.adF.win.mu",
 
 # MCMC settings (31145 sec for 75,000 w 5000 burn on 2 chains, about 9 hours)
 ## run once more at 150,000 ni, 50,000 nb
-ni <- 150
-nt <- 1
-nb <- 50
-nc <- 2
+# 10,000 iterations, 4902 sec, still hasn't converged on S 
+ni <- 150000
+nt <- 10
+nb <- 50000
+nc <- 3
 
 # Call WinBUGS from R #jags version doesn't work, hangs on rel.juvF[1]
-ABDU.Brownie1.out <- bugs(bugs.data, inits, parameters, "ABDU.Brownie1.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, debug = TRUE, bugs.directory = bugs.dir, working.directory = getwd())
-print(ABDU.Brownie1.out, digits = 5)
+#ABDU.Brownie1.bug <- bugs(bugs.data, inits, parameters, "ABDU.Brownie1.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, debug = TRUE, bugs.directory = bugs.dir, working.directory = getwd())
+#print(ABDU.Brownie1.bug, digits = 5)
 
-ABDU.Brownie1.out <- jags(bugs.data, inits, parameters, "ABDU.Brownie1.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, working.directory = getwd())
-print(ABDU.Brownie1.out, digits = 5)
+ABDU.Brownie1.jags <- jagsUI(bugs.data, inits, parameters, "ABDU.Brownie1.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE)
+print(ABDU.Brownie1.jags, digits = 5)
+
+########################################################################
+# 2-season band recovery model for ABDU
+#
+# Add bells and whistles, correlations among survival and recovery rates
+########################################################################
+
+sink("ABDU.Brownie2.bug")
+cat("
+    model {
+    
+    # Priors and constraints
+    # Mean survival: 1 JF, 2 JM, 3 AF Sum, 4 AM Sum, 5 AF Winter, 6 AM Winter
+    for (s in 1:6){ 
+    s.x[s] ~ dunif(0,1)                   # uniform realistic prior on real scale
+    s.mu[s] <- logit(s.x[s])              # transform to logit scale
+    } # close loop
+    
+    # Mean Brownie recovery: 1 JF, 2 JM, 3 AF, 4 AM 
+    for (f in 1:4){ 
+    f.x[f] ~ dunif(0,1)
+    f.mu[f] <- logit(f.x[f])
+    } # close loop
+    
+    # Generate correlated variances between males and females for each variable pair
+    Omega.js[1:2,1:2] ~ dwish(R.js[,], df.js)  # juvenile survival, 1 F, 2 M
+    Sigma.js[1:2,1:2] <- inverse(Omega.js[,])
+    Omega.ss[1:2,1:2] ~ dwish(R.ss[,], df.ss)  # adult summer survival
+    Sigma.ss[1:2,1:2] <- inverse(Omega.ss[,])
+    Omega.ws[1:2,1:2] ~ dwish(R.ws[,], df.ws)  # adult winter survival
+    Sigma.ws[1:2,1:2] <- inverse(Omega.ws[,])
+    Omega.jf[1:2,1:2] ~ dwish(R.jf[,], df.jf) # juvenile recovery 
+    Sigma.jf[1:2,1:2] <- inverse(Omega.jf[,])
+    Omega.af[1:2,1:2] ~ dwish(R.af[,], df.af) # adult recovery rate
+    Sigma.af[1:2,1:2] <- inverse(Omega.af[,])
+    
+    # Generate seasonal parameters for Survival and recovery (1 is F, 2 is M)
+    for (y in 1:yrs){
+    eps.js[1:2,y] ~ dmnorm(zero.js[], Omega.js[,])
+    eps.ss[1:2,y] ~ dmnorm(zero.ss[], Omega.ss[,])
+    eps.ws[1:2,y] ~ dmnorm(zero.ws[], Omega.ws[,])
+    eps.jf[1:2,y] ~ dmnorm(zero.jf[], Omega.jf[,])
+    eps.af[1:2,y] ~ dmnorm(zero.af[], Omega.af[,])
+    for (s in 1:2){
+    logit(js[s,y]) <- s.mu[s] + eps.js[s,y]
+    logit(ss[s,y]) <- s.mu[s+2] + eps.ss[s,y]
+    logit(ws[s,y]) <- s.mu[s+4] + eps.ws[s,y]
+    logit(jf[s,y]) <- f.mu[s] + eps.jf[s,y]
+    logit(af[s,y]) <- f.mu[s+2] + eps.af[s,y]}
+    } # close y
+    ss[1,21] <- 1 # dummy values for extra summer survival for easier coding
+    ss[2,21] <- 1
+    
+    # Generate multinomial likelihoods for m-arrays
+    for (t in 1:(2*yrs)){
+    marr.juvF.shot[t,1:(yrs+1)] ~ dmulti(pr.juvF.shot[t,], rel.juvF[t])
+    marr.ad_unkF.shot[t,1:(yrs+1)] ~ dmulti(pr.adF.shot[t,], rel.adF[t])
+    marr.juvM.shot[t,1:(yrs+1)] ~ dmulti(pr.juvM.shot[t,], rel.juvM[t])
+    marr.ad_unkM.shot[t,1:(yrs+1)] ~ dmulti(pr.adM.shot[t,], rel.adM[t])
+    }
+    
+    # Define cell probabilities of the m-arrays
+    for (y in 1:yrs){   
+    # model prob direct recovery in season [y] 
+    pr.juvF.shot[2*y-1,y] <- ss[1,y] * af[1,y]   # juv marked in spring survives summer as adult, recovered as adult
+    pr.juvF.shot[2*y,y] <- 1 * jf[1,y]
+    pr.adF.shot[2*y-1,y] <- ss[1,y] * af[1,y]
+    pr.adF.shot[2*y,y] <- 1 * af[1,y]
+    pr.juvM.shot[2*y-1,y] <- ss[2,y] * af[2,y]
+    pr.juvM.shot[2*y,y] <- 1 * jf[2,y]
+    pr.adM.shot[2*y-1,y] <- ss[2,y] * af[2,y]
+    pr.adM.shot[2*y,y] <- 1 * af[2,y]
+    
+    # probability of surviving to start of second hunting season (2*summer+1winter if winter banded, sum & winter otherwise)
+    surv.jF[2*y-1,y] <- ss[1,y] * ws[1,y] * ss[1,y+1]  
+    surv.jF[2*y,y] <- js[1,y] * ss[1,y+1]
+    surv.aF[2*y-1,y] <- ss[1,y] * ws[1,y] * ss[1,y+1]
+    surv.aF[2*y,y] <- ws[1,y] * ss[1,y+1]
+    surv.jM[2*y-1,y] <- ss[2,y] * ws[2,y] * ss[2,y+1]
+    surv.jM[2*y,y] <- js[2,y] * ss[2,y+1]
+    surv.aM[2*y-1,y] <- ss[2,y] * ws[2,y] * ss[2,y+1]
+    surv.aM[2*y,y] <- ws[2,y] * ss[2,y+1]
+    
+    # second and subsequent diagonals
+    for (k in (y+1):yrs){
+    # model prob recovery = prob survives until k, recovered in k 
+    pr.juvF.shot[2*y-1,k] <- surv.jF[2*y-1,k-1] * af[1,k]
+    pr.juvF.shot[2*y,k] <- surv.jF[2*y,k-1] * af[1,k]
+    pr.adF.shot[2*y-1,k] <- surv.aF[2*y-1,k-1] * af[1,k]
+    pr.adF.shot[2*y,k] <- surv.aF[2*y,k-1] * af[1,k]
+    pr.juvM.shot[2*y-1,k] <- surv.jM[2*y-1,k-1] * af[2,k]
+    pr.juvM.shot[2*y,k] <- surv.jM[2*y,k-1] * af[2,k]
+    pr.adM.shot[2*y-1,k] <- surv.aM[2*y-1,k-1] * af[2,k]
+    pr.adM.shot[2*y,k] <- surv.aM[2*y,k-1] * af[2,k]
+    
+    # survival to next hunting season (all adult survival now)
+    surv.jF[2*y-1,k] <- surv.jF[2*y-1,k-1] * ss[1,k-1] * ws[1,k]
+    surv.jF[2*y,k] <- surv.jF[2*y,k-1] * ss[1,k-1] * ws[1,k]
+    surv.aF[2*y-1,k] <- surv.aF[2*y-1,k-1] * ss[1,k-1] * ws[1,k]
+    surv.aF[2*y,k] <- surv.aF[2*y,k-1] * ss[1,k-1] * ws[1,k]
+    surv.jM[2*y-1,k] <- surv.jM[2*y-1,k-1] * ss[2,k-1] * ws[2,k]
+    surv.jM[2*y,k] <- surv.jM[2*y,k-1] * ss[2,k-1] * ws[2,k]
+    surv.aM[2*y-1,k] <- surv.aM[2*y-1,k-1] * ss[2,k-1] * ws[2,k]
+    surv.aM[2*y,k] <- surv.aM[2*y,k-1] * ss[2,k-1] * ws[2,k]
+    } #k
+    
+    # Left of main diagonal (prob of encounter prior to banding = 0)
+    for (l in 1:(y-1)){
+    pr.juvF.shot[2*y-1,l] <- 0
+    pr.juvF.shot[2*y,l] <- 0
+    pr.adF.shot[2*y-1,l] <- 0
+    pr.adF.shot[2*y,l] <- 0
+    pr.juvM.shot[2*y-1,l] <- 0
+    pr.juvM.shot[2*y,l] <- 0
+    pr.adM.shot[2*y-1,l] <- 0
+    pr.adM.shot[2*y,l] <- 0
+    } #l
+    } #y
+    
+    # Last column: probability of non-recovery
+    for (t in 1:(2*yrs)){
+    pr.juvF.shot[t,(yrs+1)] <- 1-sum(pr.juvF.shot[t,1:yrs])
+    pr.adF.shot[t,(yrs+1)] <- 1-sum(pr.adF.shot[t,1:yrs])
+    pr.juvM.shot[t,(yrs+1)] <- 1-sum(pr.juvM.shot[t,1:yrs])
+    pr.adM.shot[t,(yrs+1)] <- 1-sum(pr.adM.shot[t,1:yrs])
+    } #t
+    
+    } # end bugs model
+    ",fill = TRUE)
+sink()
+
+# Bundle data, pool adult and unk m-arrays since not modeling unique parms on uk
+bugs.data <- list(yrs=20, marr.juvF.shot=marr.juvF.shot, marr.ad_unkF.shot=marr.ad_unkF.shot,
+                  marr.juvM.shot=marr.juvM.shot, marr.ad_unkM.shot=marr.ad_unkM.shot, 
+                  rel.juvF = banded[,1], rel.adF = banded[,2]+banded[,3], 
+                  rel.juvM = banded[,5], rel.adM = banded[,6]+banded[,7],
+                  zero.js = rep(0,2), df.js = 18, R.js = diag(2),
+                  zero.ss = rep(0,2), df.ss = 18, R.ss = diag(2),
+                  zero.ws = rep(0,2), df.ws = 18, R.ws = diag(2),
+                  zero.jf = rep(0,2), df.jf = 18, R.jf = diag(2),
+                  zero.af = rep(0,2), df.af = 18, R.af = diag(2))
+
+# Initial values
+inits <- function(){list(s.x=c(rep(runif(1,0,1),6)), f.x=c(rep(runif(1,0,1),4)))}  
+
+# Parameters monitored
+parameters <- c("s.x", "f.x", "Sigma.js", "Sigma.ss",  "Sigma.ws", "Sigma.jf", "Sigma.af", 
+                "js", "ss","ws", "jf", "af")
+
+# MCMC settings (150000, 50000nb achieves convergence on all parameters)
+ni <- 15000
+nt <- 10
+nb <- 5000
+nc <- 1
+
+# Call jags from R
+# can hang at initiation (with delayed error message), monitor for first few minutes if running in parallel
+ABDU.Brownie2.jags <- jagsUI(bugs.data, inits, parameters, "ABDU.Brownie2.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=FALSE)
+print(ABDU.Brownie2.jags, digits = 4)
 
 #######################
 # Part 3: Generate an IPM using Lincoln estimates for N and F, band recoveries for S
@@ -852,259 +1020,236 @@ print(ABDU.Brownie1.out, digits = 5)
 
 sink("ABDU.IPM.bug")
 cat("
- model {
-
-#---------------------------------------------
-# 1. Priors and constraints
-#---------------------------------------------
-
-# observed initial Lincoln estimates/1000 (N) for combined juv + adult females (af) and males (am)
-  N.f.Feb[1] ~ dpois(958.3)    
-  N.m.Feb[1] ~ dpois(1033.9)
-
-# uniform 0-1 priors for logit survival (s) and Brownie recovery (f) rates (Koons & Schaub 2015)
-  s.af.sum.mu ~ dunif(0,1)                            
-  ls.af.sum.mu <- log(s.af.sum.mu/(1-s.af.sum.mu))    
-  s.am.sum.mu ~ dunif(0,1)                            
-  ls.am.sum.mu <- log(s.am.sum.mu/(1-s.am.sum.mu))    
-  s.af.win.mu ~ dunif(0,1)                            
-  ls.af.win.mu <- log(s.af.win.mu/(1-s.af.win.mu))    
-  s.am.win.mu ~ dunif(0,1)                            
-  ls.am.win.mu <- log(s.am.win.mu/(1-s.am.win.mu))    
-  s.jf.sum.mu ~ dunif(0,1)                            
-  ls.jf.sum.mu <- log(s.jf.sum.mu/(1-s.jf.sum.mu))    
-  s.jm.sum.mu ~ dunif(0,1)                            
-  ls.jm.sum.mu <- log(s.jm.sum.mu/(1-s.jm.sum.mu))    
-  s.jf.win.mu ~ dunif(0,1)                            
-  ls.jf.win.mu <- log(s.jf.win.mu/(1-s.jf.win.mu))    
-  s.jm.win.mu ~ dunif(0,1)                            
-  ls.jm.win.mu <- log(s.jm.win.mu/(1-s.jm.win.mu))    
-
-  f.af.mu ~ dunif(0,1)                            
-  lf.af.mu <- log(f.af.mu/(1-f.af.mu))    
-  f.am.mu ~ dunif(0,1)                            
-  lf.am.mu <- log(f.am.mu/(1-f.am.mu))    
-  f.jf.mu ~ dunif(0,1)                            
-  lf.jf.mu <- log(f.jf.mu/(1-f.jf.mu))    
-  f.jm.mu ~ dunif(0,1)                            
-  lf.jm.mu <- log(f.jm.mu/(1-f.jm.mu))    
-
-  F.jf.mu ~ dunif(0.5,2.5)      # prior for mean fecundity rates (F sex spec because fall sex ratio unbalanced)
-  F.jm.mu ~ dunif(0.5,2.5)      
-
-# annual sd, logit scale (from preliminary analyses in MARK, these are all < 0.5)
-  s.af.sum.sd ~ dunif(0,2)                            
-  s.am.sum.sd ~ dunif(0,2)                            
-  s.af.win.sd ~ dunif(0,2)                            
-  s.am.win.sd ~ dunif(0,2)                            
-  s.jf.sum.sd ~ dunif(0,2)                            
-  s.jm.sum.sd ~ dunif(0,2)                            
-  s.jf.win.sd ~ dunif(0,2)                            
-  s.jm.win.sd ~ dunif(0,2)                            
-  
-  f.af.sd ~ dunif(0,2)                            
-  f.am.sd ~ dunif(0,2)                            
-  f.jf.sd ~ dunif(0,2)                            
-  f.jm.sd ~ dunif(0,2)                            
-
-  F.jf.sd ~ dunif(0,2)    
-  F.jm.sd ~ dunif(0,2)      
-
-# annual sd expressed as precision, tau = (1/sd^2)
-  s.af.sum.tau <- pow(s.af.sum.sd,-2)                            
-  s.am.sum.tau <- pow(s.am.sum.sd,-2)                            
-  s.af.win.tau <- pow(s.af.win.sd,-2)                            
-  s.am.win.tau <- pow(s.am.win.sd,-2)                            
-  s.jf.sum.tau <- pow(s.jf.sum.sd,-2)                            
-  s.jm.sum.tau <- pow(s.jm.sum.sd,-2)                            
-  s.jf.win.tau <- pow(s.jf.win.sd,-2)                            
-  s.jm.win.tau <- pow(s.jm.win.sd,-2)                            
-  
-  f.af.tau <- pow(f.af.sd,-2)                            
-  f.am.tau <- pow(f.am.sd,-2)                            
-  f.jf.tau <- pow(f.jf.sd,-2)                            
-  f.jm.tau <- pow(f.jm.sd,-2)                            
-
-  F.jf.tau <- pow(F.jf.sd,-2)    
-  F.jm.tau <- pow(F.jm.sd,-2)     
-
-#---------------------------------------------
-# 2. Generate annual parameter estimates (S, f, F)
-#---------------------------------------------
+    model {
     
-for (y in 1:yrs){
-  logit.s.af.sum[y] ~ dnorm(ls.af.sum.mu,s.af.sum.tau)
-  logit(s.af.sum[y]) <- logit.s.af.sum[y] 
-  logit.s.am.sum[y] ~ dnorm(ls.am.sum.mu,s.am.sum.tau)
-  logit(s.am.sum[y]) <- logit.s.am.sum[y] 
-  logit.s.af.win[y] ~ dnorm(ls.af.win.mu,s.af.win.tau)
-  logit(s.af.win[y]) <- logit.s.af.win[y] 
-  logit.s.am.win[y] ~ dnorm(ls.am.win.mu,s.am.win.tau)
-  logit(s.am.win[y]) <- logit.s.am.win[y] 
-  logit.s.jf.sum[y] ~ dnorm(ls.jf.sum.mu,s.jf.sum.tau)
-  logit(s.jf.sum[y]) <- logit.s.jf.sum[y] 
-  logit.s.jm.sum[y] ~ dnorm(ls.jm.sum.mu,s.jm.sum.tau)
-  logit(s.jm.sum[y]) <- logit.s.jm.sum[y] 
-  logit.s.jf.win[y] ~ dnorm(ls.jf.win.mu,s.jf.win.tau)
-  logit(s.jf.win[y]) <- logit.s.jf.win[y] 
-  logit.s.jm.win[y] ~ dnorm(ls.jm.win.mu,s.jm.win.tau)
-  logit(s.jm.win[y]) <- logit.s.jm.win[y] 
-  logit.f.af[y] ~ dnorm(lf.af.mu,f.af.tau)
-  logit(f.af[y]) <- logit.f.af[y] 
-  logit.f.am[y] ~ dnorm(lf.am.mu,f.am.tau)
-  logit(f.am[y]) <- logit.f.am[y] 
-  logit.f.jf[y] ~ dnorm(lf.jf.mu,f.jf.tau)
-  logit(f.jf[y]) <- logit.f.jf[y] 
-  logit.f.jm[y] ~ dnorm(lf.jm.mu,f.jm.tau)
-  logit(f.jm[y]) <- logit.f.jm[y] 
-  Fecun.jf[y] ~ dnorm(F.jf.mu,F.jf.tau) 
-  F.jf[y] <-max(0,Fecun.jf[y])                # avoiding I(0,) format
-  Fecun.jm[y] ~ dnorm(F.jm.mu,F.jm.tau) 
-  F.jm[y] <-max(0,Fecun.jm[y])
-  }
-
-#-------------------------------------------
-# 3a. Likelihood for population components from Lincoln estimates
-#-------------------------------------------
-# millions of birds, so ignoring demographic stochasticity
-# apportion spring 1 population estimates according to long-term projected age ratios
-  N.af.Feb[1] <- N.f.Feb[1] * (1-0.57)  
-  N.am.Feb[1] <- N.m.Feb[1] * (1-0.42)  
-  N.jf.Feb[1] <- N.f.Feb[1] * 0.57
-  N.jm.Feb[1] <- N.f.Feb[1] * 0.42
-
-
-# estimate fall population sizes in year 1
-  N.af.Aug[1] <- N.af.Feb[1] * s.af.sum[1]  
-  N.am.Aug[1] <- N.am.Feb[1] * s.am.sum[1]  
-  N.jf.Aug[1] <- N.af.Aug[1] * F.jf[1]
-  N.jm.Aug[1] <- N.af.Aug[1] * F.jm[1]
-
-for (t in 2:yrs){
-  N.af.Feb[t] <- N.af.Aug[t-1] * s.af.win[t-1]
-  N.am.Feb[t] <- N.am.Aug[t-1] * s.am.win[t-1]
-  N.jf.Feb[t] <- N.jf.Aug[t-1] * s.jf.win[t-1]
-  N.jm.Feb[t] <- N.jm.Aug[t-1] * s.jm.win[t-1]
-  N.f.Feb[t] <- N.af.Feb[t] + N.jf.Feb[t]        # combined ad + juv population is what Lincoln estimates
-  N.m.Feb[t] <- N.am.Feb[t] + N.jm.Feb[t]        
-  N.af.Aug[t] <- N.af.Feb[t] * s.af.sum[t]  
-  N.am.Aug[t] <- N.am.Feb[t] * s.am.sum[t]  
-  N.jf.Aug[t] <- N.af.Aug[t] * F.jf[t]
-  N.jm.Aug[t] <- N.af.Aug[t] * F.jm[t]
-  }
+    #---------------------------------------------
+    # 1. Priors and constraints
+    #---------------------------------------------
     
-# Derived parms, more efficient to estimate from saved posteriors unless I want intrinsic correlations
-#  lambda.BPOP[t-1] <- (N.f.Feb[t]+N.m.Feb[t])/(N.f.Feb[t-1]+N.m.Feb[t-1])
-#  lambda.Fall[t-1] <- (N.af.Aug[t]+N.am.Aug[t]+N.jf.Aug[t]+N.jm.Aug[t])/(N.af.Aug[t-1]+N.am.Aug[t-1]+N.jf.Aug[t-1]+N.jm.Aug[t-1])
-#  sexratio.BPOP[t] <- (N.m.Feb[t])/(N.f.Feb[t]+N.m.Feb[t])
-
-# Observation process, population counts
-for (t in 1:yrs) {
-  jf.obs.Aug[t] ~ dpois(N.jf.Aug[t]) 
-  jm.obs.Aug[t] ~ dpois(N.jm.Aug[t]) 
-  af.obs.Aug[t] ~ dpois(N.af.Aug[t]) 
-  am.obs.Aug[t] ~ dpois(N.am.Aug[t]) 
-  f.obs.Feb[t] ~ dpois(N.f.Feb[t]) 
-  m.obs.Feb[t] ~ dpois(N.m.Feb[t]) 
-  }
-
-#-------------------------------------------
-# 3a. Likelihood for band recovery data (S and f)
-#-------------------------------------------
-
-# Generate multinomial likelihoods for m-arrays (modified from Kery & Schaub)
-# 2 rows for each year, Feb bandings, then Aug bandings
-# also have m-arrays for other dead encounters and live recaps, but they add little precision, shot only here
-
-for (t in 1:(2*yrs)){
-  marr.juvF.shot[t,1:(yrs+1)] ~ dmulti(pr.jf.shot[t,], rel.jf[t])
-  marr.ad_unkF.shot[t,1:(yrs+1)] ~ dmulti(pr.af.shot[t,], rel.af[t])
-  marr.juvM.shot[t,1:(yrs+1)] ~ dmulti(pr.jm.shot[t,], rel.jm[t])
-  marr.ad_unkM.shot[t,1:(yrs+1)] ~ dmulti(pr.am.shot[t,], rel.af[t])
-  }
+    # observed initial Lincoln estimates/1000 (N) for combined juv + adult females (af) and males (am)
+    N.f.Feb[1] ~ dpois(958.3)    
+    N.m.Feb[1] ~ dpois(1033.9)
     
-# Calculate the number of birds released each banding season (releases in all 40 rows)
-for (t in 1:(2*yrs)){
-  rel.jf[t] <- sum(marr.juvF.shot[t,])
-  rel.af[t] <- sum(marr.ad_unkF.shot[t,])
-  rel.jm[t] <- sum(marr.juvM.shot[t,])
-  rel.am[t] <- sum(marr.ad_unkM.shot[t,])
-  }
+    # uniform 0-1 priors for logit survival (s) and Brownie recovery (f) rates (Koons & Schaub 2015)
+    s.af.sum.mu ~ dunif(0,1)                            
+    ls.af.sum.mu <- log(s.af.sum.mu/(1-s.af.sum.mu))    
+    s.am.sum.mu ~ dunif(0,1)                            
+    ls.am.sum.mu <- log(s.am.sum.mu/(1-s.am.sum.mu))    
+    s.af.win.mu ~ dunif(0,1)                            
+    ls.af.win.mu <- log(s.af.win.mu/(1-s.af.win.mu))    
+    s.am.win.mu ~ dunif(0,1)                            
+    ls.am.win.mu <- log(s.am.win.mu/(1-s.am.win.mu))    
+    s.jf.sum.mu ~ dunif(0,1)                            # Give yrlg separate S in 1st summer?
+    ls.jf.sum.mu <- log(s.jf.sum.mu/(1-s.jf.sum.mu))    
+    s.jm.sum.mu ~ dunif(0,1)                            
+    ls.jm.sum.mu <- log(s.jm.sum.mu/(1-s.jm.sum.mu))    
+    s.jf.win.mu ~ dunif(0,1)                            
+    ls.jf.win.mu <- log(s.jf.win.mu/(1-s.jf.win.mu))    
+    s.jm.win.mu ~ dunif(0,1)                            
+    ls.jm.win.mu <- log(s.jm.win.mu/(1-s.jm.win.mu))    
     
-# Define cell probabilities of the m-arrays
-for (y in 1:yrs){   
-  # cumulative probability of surviving to start of hunting season (surv), seasonal components (s)
-  surv.jf[2*y-1,y] <- s.jf.sum[y]  
-  surv.jf[2*y,y] <- 1
-  surv.af[2*y-1,y] <- s.af.sum[y]
-  surv.af[2*y,y] <- 1
-  surv.jm[2*y-1,y] <- s.jm.sum[y]
-  surv.jm[2*y,y] <- 1
-  surv.am[2*y-1,y] <- s.am.sum[y]
-  surv.am[2*y,y] <- 1
+    f.af.mu ~ dunif(0,0.3)                            
+    lf.af.mu <- log(f.af.mu/(1-f.af.mu))    
+    f.am.mu ~ dunif(0,0.3)                            
+    lf.am.mu <- log(f.am.mu/(1-f.am.mu))    
+    f.jf.mu ~ dunif(0,0.3)                            
+    lf.jf.mu <- log(f.jf.mu/(1-f.jf.mu))    
+    f.jm.mu ~ dunif(0,0.3)                            
+    lf.jm.mu <- log(f.jm.mu/(1-f.jm.mu))    
     
-  # model prob direct recovery (postseason juvs survive sum as juvs, but harvested as adults)
-  pr.jf.shot[2*y-1,y] <- surv.jf[2*y-1,y]*f.af[y]
-  pr.jf.shot[2*y,y] <- surv.jf[2*y,y]*f.jf[y]
-  pr.af.shot[2*y-1,y] <- surv.af[2*y-1,y]*f.af[y]
-  pr.af.shot[2*y,y] <- surv.af[2*y,y]*f.af[y]
-  pr.jm.shot[2*y-1,y] <- surv.jm[2*y-1,y]*f.am[y]
-  pr.jm.shot[2*y,y] <- surv.jm[2*y,y]*f.jm[y]
-  pr.am.shot[2*y-1,y] <- surv.am[2*y-1,y]*f.am[y]
-  pr.am.shot[2*y,y] <- surv.am[2*y,y]*f.am[y]
-  } # y for first diagonal
+    #### Revisit this, F with added parameter for sex ratio at fledge
+    F.jf.mu ~ dunif(0.5,2.5)      # prior for mean fecundity rates (F sex spec because fall sex ratio unbalanced)
+    F.jm.mu ~ dunif(0.5,2.5)      
     
-# second y loop omits last 2 rows and facilitates 2nd diagonal equations
-for (y in 1:(yrs-1)){   
-# second diagonal (wherein preseason juvs experience juvenile survival in winter, postseason juvs are now adults)
-  for (j in (y+1):(y+1)){
+    # annual sd, logit scale (from preliminary analyses in MARK, these are all < 0.5)
+    s.af.sum.sd ~ dunif(0.05,2)                            
+    s.am.sum.sd ~ dunif(0.05,2)                            
+    s.af.win.sd ~ dunif(0.05,2)                            
+    s.am.win.sd ~ dunif(0.05,2)                            
+    s.jf.sum.sd ~ dunif(0.05,2)                            
+    s.jm.sum.sd ~ dunif(0.05,2)                            
+    s.jf.win.sd ~ dunif(0.05,2)                            
+    s.jm.win.sd ~ dunif(0.05,2)                            
+    
+    f.af.sd ~ dunif(0.05,2)                            
+    f.am.sd ~ dunif(0.05,2)                            
+    f.jf.sd ~ dunif(0.05,2)                            
+    f.jm.sd ~ dunif(0.05,2)                            
+    
+    F.jf.sd ~ dunif(0.05,2)    
+    F.jm.sd ~ dunif(0.05,2)      
+    
+    # annual sd expressed as precision, tau = (1/sd^2)
+    s.af.sum.tau <- pow(s.af.sum.sd,-2)                            
+    s.am.sum.tau <- pow(s.am.sum.sd,-2)                            
+    s.af.win.tau <- pow(s.af.win.sd,-2)                            
+    s.am.win.tau <- pow(s.am.win.sd,-2)                            
+    s.jf.sum.tau <- pow(s.jf.sum.sd,-2)                            
+    s.jm.sum.tau <- pow(s.jm.sum.sd,-2)                            
+    s.jf.win.tau <- pow(s.jf.win.sd,-2)                            
+    s.jm.win.tau <- pow(s.jm.win.sd,-2)                            
+    
+    f.af.tau <- pow(f.af.sd,-2)                            
+    f.am.tau <- pow(f.am.sd,-2)                            
+    f.jf.tau <- pow(f.jf.sd,-2)                            
+    f.jm.tau <- pow(f.jm.sd,-2)                            
+    
+    F.jf.tau <- pow(F.jf.sd,-2)    
+    F.jm.tau <- pow(F.jm.sd,-2)     
+    
+    #---------------------------------------------
+    # 2. Generate annual parameter estimates (S, f, F)
+    #---------------------------------------------
+    
+    for (y in 1:yrs){
+    logit.s.af.sum[y] ~ dnorm(ls.af.sum.mu,s.af.sum.tau)
+    logit(s.af.sum[y]) <- logit.s.af.sum[y] 
+    logit.s.am.sum[y] ~ dnorm(ls.am.sum.mu,s.am.sum.tau)
+    logit(s.am.sum[y]) <- logit.s.am.sum[y] 
+    logit.s.af.win[y] ~ dnorm(ls.af.win.mu,s.af.win.tau)
+    logit(s.af.win[y]) <- logit.s.af.win[y] 
+    logit.s.am.win[y] ~ dnorm(ls.am.win.mu,s.am.win.tau)
+    logit(s.am.win[y]) <- logit.s.am.win[y] 
+    logit.s.jf.sum[y] ~ dnorm(ls.jf.sum.mu,s.jf.sum.tau)
+    logit(s.jf.sum[y]) <- logit.s.jf.sum[y] 
+    logit.s.jm.sum[y] ~ dnorm(ls.jm.sum.mu,s.jm.sum.tau)
+    logit(s.jm.sum[y]) <- logit.s.jm.sum[y] 
+    logit.s.jf.win[y] ~ dnorm(ls.jf.win.mu,s.jf.win.tau)
+    logit(s.jf.win[y]) <- logit.s.jf.win[y] 
+    logit.s.jm.win[y] ~ dnorm(ls.jm.win.mu,s.jm.win.tau)
+    logit(s.jm.win[y]) <- logit.s.jm.win[y] 
+    logit.f.af[y] ~ dnorm(lf.af.mu,f.af.tau)
+    logit(f.af[y]) <- logit.f.af[y] 
+    logit.f.am[y] ~ dnorm(lf.am.mu,f.am.tau)
+    logit(f.am[y]) <- logit.f.am[y] 
+    logit.f.jf[y] ~ dnorm(lf.jf.mu,f.jf.tau)
+    logit(f.jf[y]) <- logit.f.jf[y] 
+    logit.f.jm[y] ~ dnorm(lf.jm.mu,f.jm.tau)
+    logit(f.jm[y]) <- logit.f.jm[y] 
+    Fecun.jf[y] ~ dnorm(F.jf.mu,F.jf.tau) 
+    F.jf[y] <-max(0,Fecun.jf[y])                # avoiding I(0,) format
+    Fecun.jm[y] ~ dnorm(F.jm.mu,F.jm.tau) 
+    F.jm[y] <-max(0,Fecun.jm[y])
+    }
+    s.af.sum[21] <- 1 # dummy variables for parameter references exceeding matrix boundaries
+    s.am.sum[21] <- 1
+    s.jf.sum[21] <- 1
+    s.jm.sum[21] <- 1
+    
+    #-------------------------------------------
+    # 3a. Likelihood for population components from Lincoln estimates
+    #-------------------------------------------
+    # millions of birds, so ignoring demographic stochasticity
+    # apportion spring 1 population estimates according to long-term projected age ratios
+    N.af.Feb[1] <- N.f.Feb[1] * (1-0.57)  
+    N.am.Feb[1] <- N.m.Feb[1] * (1-0.42)  
+    N.jf.Feb[1] <- N.f.Feb[1] * 0.57
+    N.jm.Feb[1] <- N.f.Feb[1] * 0.42
+    
+    
+    # estimate fall population sizes in year 1
+    N.af.Aug[1] <- N.af.Feb[1] * s.af.sum[1]  
+    N.am.Aug[1] <- N.am.Feb[1] * s.am.sum[1]  
+    N.jf.Aug[1] <- N.af.Aug[1] * F.jf[1]
+    N.jm.Aug[1] <- N.af.Aug[1] * F.jm[1]
+    
+    for (t in 2:yrs){
+    N.af.Feb[t] <- N.af.Aug[t-1] * s.af.win[t-1]
+    N.am.Feb[t] <- N.am.Aug[t-1] * s.am.win[t-1]
+    N.jf.Feb[t] <- N.jf.Aug[t-1] * s.jf.win[t-1]
+    N.jm.Feb[t] <- N.jm.Aug[t-1] * s.jm.win[t-1]
+    # combined ad + juv population is what Lincoln (and BPOP) estimates
+    N.f.Feb[t] <- N.af.Feb[t] + N.jf.Feb[t]        
+    N.m.Feb[t] <- N.am.Feb[t] + N.jm.Feb[t]        
+    # juveniles (yearlings) graduate to adults in this step
+    N.af.Aug[t] <- N.af.Feb[t] * s.af.sum[t]  + N.jf.Feb[t] * s.jf.sum[t]
+    N.am.Aug[t] <- N.am.Feb[t] * s.am.sum[t]  + N.jm.Feb[t] * s.jm.sum[t]
+    N.jf.Aug[t] <- N.af.Aug[t] * F.jf[t]
+    N.jm.Aug[t] <- N.af.Aug[t] * F.jm[t]
+    }
+    
+    # Derived parms, more efficient to estimate from saved posteriors unless I want intrinsic correlations
+    #  lambda.BPOP[t-1] <- (N.f.Feb[t]+N.m.Feb[t])/(N.f.Feb[t-1]+N.m.Feb[t-1])
+    #  lambda.Fall[t-1] <- (N.af.Aug[t]+N.am.Aug[t]+N.jf.Aug[t]+N.jm.Aug[t])/(N.af.Aug[t-1]+N.am.Aug[t-1]+N.jf.Aug[t-1]+N.jm.Aug[t-1])
+    #  sexratio.BPOP[t] <- (N.m.Feb[t])/(N.f.Feb[t]+N.m.Feb[t])
+    
+    # Observation process, population counts
+    for (t in 1:yrs) {
+    jf.obs.Aug[t] ~ dpois(N.jf.Aug[t]) 
+    jm.obs.Aug[t] ~ dpois(N.jm.Aug[t]) 
+    af.obs.Aug[t] ~ dpois(N.af.Aug[t]) 
+    am.obs.Aug[t] ~ dpois(N.am.Aug[t]) 
+    f.obs.Feb[t] ~ dpois(N.f.Feb[t]) 
+    m.obs.Feb[t] ~ dpois(N.m.Feb[t]) 
+    }
+    
+    #-------------------------------------------
+    # 3a. Likelihood for band recovery data (S and f)
+    #-------------------------------------------
+    
+    # Generate multinomial likelihoods for m-arrays (modified from Kery & Schaub)
+    # 2 rows for each year, Feb bandings, then Aug bandings
+    # also have m-arrays for other dead encounters and live recaps, but they add little precision, shot only here
+    
+    for (t in 1:(2*yrs)){
+    marr.juvF.shot[t,1:(yrs+1)] ~ dmulti(pr.jf.shot[t,], rel.jf[t])
+    marr.ad_unkF.shot[t,1:(yrs+1)] ~ dmulti(pr.af.shot[t,], rel.af[t])
+    marr.juvM.shot[t,1:(yrs+1)] ~ dmulti(pr.jm.shot[t,], rel.jm[t])
+    marr.ad_unkM.shot[t,1:(yrs+1)] ~ dmulti(pr.am.shot[t,], rel.am[t])
+    }
+    
+    # Define cell probabilities of the m-arrays
+    for (y in 1:yrs){   
+    # model prob direct recovery (postseason juvs survive sum as juvs, but harvested as adults)
+    pr.jf.shot[2*y-1,y] <- s.jf.sum[y] * f.af[y]
+    pr.jf.shot[2*y,y] <- 1 * f.jf[y]              # 1  denotes all fall-banded birds survived summer
+    pr.af.shot[2*y-1,y] <- s.af.sum[y] * f.af[y]
+    pr.af.shot[2*y,y] <- 1 * f.af[y]
+    pr.jm.shot[2*y-1,y] <- s.jm.sum[y] * f.am[y]
+    pr.jm.shot[2*y,y] <- 1 * f.jm[y]
+    pr.am.shot[2*y-1,y] <- s.am.sum[y] * f.am[y]
+    pr.am.shot[2*y,y] <- 1 * f.am[y]
+    
+    # cumulative probability of surviving to start of 2nd hunting season (surv), seasonal components (s)
+    surv.jf[2*y-1,y] <- s.jf.sum[y] * s.af.win[y] * s.af.sum[y+1] 
+    surv.jf[2*y,y] <- s.jf.win[y] * s.jf.sum[y+1]
+    surv.af[2*y-1,y] <- s.af.sum[y] * s.af.win[y] * s.af.sum[y+1]
+    surv.af[2*y,y] <- s.af.win[y] * s.af.sum[y+1]
+    surv.jm[2*y-1,y] <- s.jm.sum[y] * s.am.win[y] * s.am.sum[y+1]
+    surv.jm[2*y,y] <- s.jm.win[y] * s.jm.sum[y+1]
+    surv.am[2*y-1,y] <- s.am.sum[y] * s.am.win[y] * s.am.sum[y+1]
+    surv.am[2*y,y] <- s.am.win[y] * s.am.sum[y+1]
+    } # y for first diagonal
+    
+    # second y loop 
+    for (y in 1:yrs){   
+    for (j in (y+1):yrs){
+    # model prob recovery = prob survives until j, recovered in j 
+    pr.jf.shot[2*y-1,j] <- surv.jf[2*y-1,j-1]*f.af[j]
+    pr.jf.shot[2*y,j] <- surv.jf[2*y,j-1]*f.af[j]
+    pr.af.shot[2*y-1,j] <- surv.af[2*y-1,j-1]*f.af[j]
+    pr.af.shot[2*y,j] <- surv.af[2*y,j-1]*f.af[j]
+    pr.jm.shot[2*y-1,j] <- surv.jm[2*y-1,j-1]*f.am[j]
+    pr.jm.shot[2*y,j] <- surv.jm[2*y,j-1]*f.am[j]
+    pr.am.shot[2*y-1,j] <- surv.am[2*y-1,j-1]*f.am[j]
+    pr.am.shot[2*y,j] <- surv.am[2*y,j-1]*f.am[j]
+    # model survival to next hunting season
     surv.jf[2*y-1,j] <- surv.jf[2*y-1,j-1]*s.af.win[j-1]*s.af.sum[j] 
-    surv.jf[2*y,j]   <- surv.jf[2*y,j-1]*s.jf.win[j-1]*s.af.sum[j]
+    surv.jf[2*y,j]   <- surv.jf[2*y,j-1]*s.af.win[j-1]*s.af.sum[j]
     surv.af[2*y-1,j] <- surv.af[2*y-1,j-1]*s.af.win[j-1]*s.af.sum[j]
     surv.af[2*y,j]   <- surv.af[2*y,j-1]*s.af.win[j-1]*s.af.sum[j]
     surv.jm[2*y-1,j] <- surv.jm[2*y-1,j-1]*s.am.win[j-1]*s.am.sum[j] 
-    surv.jm[2*y,j]   <- surv.jm[2*y,j-1]*s.jm.win[j-1]*s.am.sum[j]
+    surv.jm[2*y,j]   <- surv.jm[2*y,j-1]*s.am.win[j-1]*s.am.sum[j]
     surv.am[2*y-1,j] <- surv.am[2*y-1,j-1]*s.am.win[j-1]*s.am.sum[j]
     surv.am[2*y,j]   <- surv.am[2*y,j-1]*s.am.win[j-1]*s.am.sum[j]
+    } #j
     
-# model prob recovery = prob survives until j, recovered in j 
-    pr.jf.shot[2*y-1,j] <- surv.jf[2*y-1,j]*f.af[j]
-    pr.jf.shot[2*y,j] <- surv.jf[2*y,j]*f.af[j]
-    pr.af.shot[2*y-1,j] <- surv.jf[2*y-1,j]*f.af[j]
-    pr.af.shot[2*y,j] <- surv.jf[2*y,j]*f.af[j]
-    pr.jm.shot[2*y-1,j] <- surv.jm[2*y-1,j]*f.am[j]
-    pr.jm.shot[2*y,j] <- surv.jm[2*y,j]*f.am[j]
-    pr.am.shot[2*y-1,j] <- surv.jm[2*y-1,j]*f.am[j]
-    pr.am.shot[2*y,j] <- surv.jm[2*y,j]*f.am[j]
-    } #k
+    } # end second y loop
     
-# third and subsequent diagonals (all cohorts have transitioned to adulthood)
-  for (k in (y+2):yrs){
-    surv.jf[2*y-1,k] <- surv.jf[2*y-1,k-1]*s.af.win[k-1]*s.af.sum[k]
-    surv.jf[2*y,k] <- surv.jf[2*y,k-1]*s.af.win[k-1]*s.af.sum[k]
-    surv.af[2*y-1,k] <- surv.af[2*y-1,k-1]*s.af.win[k-1]*s.af.sum[k]
-    surv.af[2*y,k] <- surv.af[2*y,k-1]*s.af.win[k-1]*s.af.sum[k]
-    surv.jm[2*y-1,k] <- surv.jm[2*y-1,k-1]*s.am.win[k-1]*s.am.sum[k]
-    surv.jm[2*y,k] <- surv.jm[2*y,k-1]*s.am.win[k-1]*s.am.sum[k]
-    surv.am[2*y-1,k] <- surv.am[2*y-1,k-1]*s.am.win[k-1]*s.am.sum[k]
-    surv.am[2*y,k] <- surv.am[2*y,k-1]*s.am.win[k-1]*s.am.sum[k]
-    
-# model prob recovery = prob survives until k, recovered in k 
-    pr.jf.shot[2*y-1,k] <- surv.jf[2*y-1,k]*f.af[k]
-    pr.jf.shot[2*y,k]   <- surv.jf[2*y,k]*f.af[k]
-    pr.af.shot[2*y-1,k] <- surv.jf[2*y-1,k]*f.af[k]
-    pr.af.shot[2*y,k]   <- surv.jf[2*y,k]*f.af[k]
-    pr.jm.shot[2*y-1,k] <- surv.jm[2*y-1,k]*f.am[k]
-    pr.jm.shot[2*y,k]   <- surv.jm[2*y,k]*f.am[k]
-    pr.am.shot[2*y-1,k] <- surv.jm[2*y-1,k]*f.am[k]
-    pr.am.shot[2*y,k]   <- surv.jm[2*y,k]*f.am[k]
-    } #k
-} # end second y loop
-    
-# third y loop fills in remainder of dmulti matrix
-for (y in 1:yrs){  
-# Left of main diagonal (prob of encounter prior to banding = 0)
-  for (l in 1:(y-1)){
+    # third y loop fills in remainder of dmulti matrix
+    for (y in 1:yrs){  
+    # Left of main diagonal (prob of encounter prior to banding = 0)
+    for (l in 1:(y-1)){
     pr.jf.shot[2*y-1,l] <- 0
     pr.jf.shot[2*y,l] <- 0
     pr.af.shot[2*y-1,l] <- 0
@@ -1116,21 +1261,23 @@ for (y in 1:yrs){
     } #l
     } #y
     
-# Last column: probability of non-recovery
-for (t in 1:(2*yrs)){
-  pr.jf.shot[t,(yrs+1)] <- 1-sum(pr.jf.shot[t,1:yrs])
-  pr.af.shot[t,(yrs+1)] <- 1-sum(pr.af.shot[t,1:yrs])
-  pr.jm.shot[t,(yrs+1)] <- 1-sum(pr.jm.shot[t,1:yrs])
-  pr.am.shot[t,(yrs+1)] <- 1-sum(pr.am.shot[t,1:yrs])
-  } #t
- }  # Hail Mary, end bugs model  
+    # Last column: probability of non-recovery
+    for (t in 1:(2*yrs)){
+    pr.jf.shot[t,(yrs+1)] <- 1-sum(pr.jf.shot[t,1:yrs])
+    pr.af.shot[t,(yrs+1)] <- 1-sum(pr.af.shot[t,1:yrs])
+    pr.jm.shot[t,(yrs+1)] <- 1-sum(pr.jm.shot[t,1:yrs])
+    pr.am.shot[t,(yrs+1)] <- 1-sum(pr.am.shot[t,1:yrs])
+    } #t
+    }  # Hail Mary, end bugs model  
     ",fill=TRUE)
 sink()
 
 # Bundle data 
 bugs.data <- list(yrs=20, jf.obs.Aug=trunc(Lincoln.out[,1]/1000), jm.obs.Aug=trunc(Lincoln.out[,3]/1000), af.obs.Aug=trunc(Lincoln.out[,5]/1000),
                   am.obs.Aug=trunc(Lincoln.out[,7]/1000), f.obs.Feb=trunc(Lincoln.out[,9]/1000), m.obs.Feb=trunc(Lincoln.out[,11]/1000), 
-                  marr.juvF.shot=marr.juvF.shot, marr.ad_unkF.shot=marr.ad_unkF.shot, marr.juvM.shot=marr.juvM.shot, marr.ad_unkM.shot=marr.ad_unkM.shot)
+                  marr.juvF.shot=marr.juvF.shot, marr.ad_unkF.shot=marr.ad_unkF.shot, marr.juvM.shot=marr.juvM.shot, marr.ad_unkM.shot=marr.ad_unkM.shot,
+                  rel.jf=rowSums(marr.juvF.shot), rel.af=rowSums(marr.ad_unkF.shot),
+                  rel.jm=rowSums(marr.juvM.shot), rel.am=rowSums(marr.ad_unkM.shot))
 
 # Initial values (starting chains in target range)  
 inits <- function() {list(s.af.sum.mu = runif(1,0,3), s.am.sum.mu = runif(1,0,3), s.jf.sum.mu = runif(1,0,3), s.jm.sum.mu = runif(1,0,3),
@@ -1155,10 +1302,10 @@ nb <- 0
 nc <- 3
 
 # Call WinBUGS from R (bugs model gives undefined real result, jags hangs on rel.jf[1])
-ABDU.IPM.out <- bugs(bugs.data, inits, parameters, "ABDU.IPM.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb,debug=TRUE,bugs.directory=bugs.dir,working.directory=getwd())
+#ABDU.IPM.out <- bugs(bugs.data, inits, parameters, "ABDU.IPM.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb,debug=TRUE,bugs.directory=bugs.dir,working.directory=getwd())
 #print(ABDU.IPM.out, digits=4)
 
-ABDU.IPM.out <- jags(bugs.data, inits, parameters, "ABDU.IPM.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb,working.directory=getwd())
+ABDU.IPM.out <- jagsUI(bugs.data, inits, parameters, "ABDU.IPM.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb)
 #print(ABDU.IPM.out, digits=4)
 
 
@@ -1212,7 +1359,7 @@ cat("
     # 2. Generate annual parameter estimates (S, f, F)
     #---------------------------------------------
     
-  for (y in 1:yrs){
+    for (y in 1:yrs){
     logit.s.af.sum[y] ~ dnorm(ls.af.sum.mu,s.af.sum.tau)
     logit(s.af.sum[y]) <- logit.s.af.sum[y] 
     logit.s.af.win[y] ~ dnorm(ls.af.win.mu,s.af.win.tau)
@@ -1436,8 +1583,8 @@ cat("
     f.obs.Feb[t] ~ dpois(N.f.Feb[t]) 
     m.obs.Feb[t] ~ dpois(N.m.Feb[t]) 
     }
-
-# Derived parameters, lambda
+    
+    # Derived parameters, lambda
     for (t in 1:(yrs-1)) {
     lambda.f.Feb[t] <- N.f.Feb[t+1]/N.f.Feb[t] 
     lambda.m.Feb[t] <- N.m.Feb[t+1]/N.m.Feb[t] 
