@@ -5,15 +5,16 @@ rm(list=ls(all=TRUE)) # clear memory
 # load R2WinBUGS, set working directory for data and output, and identify WinBUGS location for your computer
 library(R2WinBUGS)  
 library(R2jags)
-library(jagsUI)
+library(jagsUI)  #SS: let's use jagsUI exclusively
 setwd("C:/Users/arnol065/Documents/BUGS/ABDU IPM") 
 bugs.dir <- "C:/WinBUGS/WinBUGS14" 
 
 # LOAD DATA #
-harvest <- read.csv("ABDU harvest and wing data.csv",header=TRUE)
+harvest <- read.csv("ABDU harvest and wing data.csv",header=TRUE)  #SS: is wing data the same as parts data?
 head(harvest)
 
 # partition data sets by US and Canada (proportionate harvest differs by age and sex)
+#SS: we'll have to partition by regions (E and C)
 US.harvest <- matrix(0,nrow=20,ncol=13,byrow=TRUE)
 Can.harvest <- matrix(0,nrow=20,ncol=13,byrow=TRUE)
 US.wings <- matrix(0,nrow=20,ncol=8,byrow=TRUE)
@@ -39,7 +40,7 @@ for (i in 1:20){
 # m-arrays start in 1969 postseason (Jan-Mar) and move in 6 month increments to preseason 1988
 # column 21 is banded birds never recovered (total releases is SUM ROW TOTAL) 
 
-banding <- read.csv("ABDU shot only.csv",header=FALSE)
+banding <- read.csv("ABDU shot only.csv",header=FALSE)   #SS: we have these data for AMWO
 head(banding)
 
 # create matrix of total bandings for Lincoln estimates
@@ -140,7 +141,7 @@ cat("
     f.pre.juvM.mu ~ dunif(-6, 0)       
     f.pre.adM.mu ~ dunif(-6, 0)        
     f.post.combM.mu ~ dunif(-6, 0) 
-    
+                                    #SS: we will be estimating a combined 'correction factor' instead of values below
     report <- 0.506                 # reporting rate (Conroy & Blandin, fixed, can estimate in joint analysis)
     harv.adj <- 0.72                 # harvest adjustment (Padding & Royle, adjust for positive bias in US harvest)
     
@@ -426,7 +427,7 @@ cat("
     model {
     
     N.adF.spring[1] ~ dnorm(13.77,167) # observed initial Lincoln estimates and precision (log scale)
-    N.adM.spring[1] ~ dnorm(13.85,286)
+    N.adM.spring[1] ~ dnorm(13.85,286)  #SS: so these values pulled from part 1 believe
     
     m.adF.sum.mu ~ dunif(-1,0)    # instantaneous mortality rate, adF sum to fall 
     m.adM.sum.mu ~ dunif(-1,0)
@@ -1016,6 +1017,7 @@ print(ABDU.Brownie2.jags, digits = 4)
 
 #######################
 # Part 3: Generate an IPM using Lincoln estimates for N and F, band recoveries for S
+#SS: same principle for AMWO; feeding in results from part 1 (lincoln estimation) as bugs data; incorporating Brownie model above into IPM as the survival model
 ########################
 
 sink("ABDU.IPM.bug")
@@ -1141,7 +1143,7 @@ cat("
     #-------------------------------------------
     # millions of birds, so ignoring demographic stochasticity
     # apportion spring 1 population estimates according to long-term projected age ratios
-    N.af.Feb[1] <- N.f.Feb[1] * (1-0.57)  
+    N.af.Feb[1] <- N.f.Feb[1] * (1-0.57)  #SS: what's this 0.57 and 0.42 exactly?
     N.am.Feb[1] <- N.m.Feb[1] * (1-0.42)  
     N.jf.Feb[1] <- N.f.Feb[1] * 0.57
     N.jm.Feb[1] <- N.f.Feb[1] * 0.42
@@ -1175,7 +1177,7 @@ cat("
     
     # Observation process, population counts
     for (t in 1:yrs) {
-    jf.obs.Aug[t] ~ dpois(N.jf.Aug[t]) 
+    jf.obs.Aug[t] ~ dpois(N.jf.Aug[t])     #These are what comes from the Lincoln estimation in part 1!
     jm.obs.Aug[t] ~ dpois(N.jm.Aug[t]) 
     af.obs.Aug[t] ~ dpois(N.af.Aug[t]) 
     am.obs.Aug[t] ~ dpois(N.am.Aug[t]) 
@@ -1187,12 +1189,14 @@ cat("
     # 3a. Likelihood for band recovery data (S and f)
     #-------------------------------------------
     
+    #SS: this is the Brownie recovery model as above, just incorporated into IPM
+
     # Generate multinomial likelihoods for m-arrays (modified from Kery & Schaub)
     # 2 rows for each year, Feb bandings, then Aug bandings
     # also have m-arrays for other dead encounters and live recaps, but they add little precision, shot only here
     
     for (t in 1:(2*yrs)){
-    marr.juvF.shot[t,1:(yrs+1)] ~ dmulti(pr.jf.shot[t,], rel.jf[t])
+    marr.juvF.shot[t,1:(yrs+1)] ~ dmulti(pr.jf.shot[t,], rel.jf[t])   
     marr.ad_unkF.shot[t,1:(yrs+1)] ~ dmulti(pr.af.shot[t,], rel.af[t])
     marr.juvM.shot[t,1:(yrs+1)] ~ dmulti(pr.jm.shot[t,], rel.jm[t])
     marr.ad_unkM.shot[t,1:(yrs+1)] ~ dmulti(pr.am.shot[t,], rel.am[t])
