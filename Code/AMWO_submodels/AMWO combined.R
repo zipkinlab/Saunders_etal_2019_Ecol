@@ -85,7 +85,7 @@ cat("
       logit(f.am[i,y]) <- logit.f.am[i,y]
       logit(f.juv[i,y]) <- logit.f.juv[i,y]
       logit(s.loc[i,y]) <- logit.s.loc[i,y]
-      f.loc[i,y] <- s.loc[i,y]*f.juv[i,y]     #true recovery rates for locals a product of survival and recovery?
+      f.loc[i,y] <- s.loc[i,y]*f.juv[i,y]     #true recovery rates for locals a product of survival and recovery of juveniles?
 
     # generate process components
       af.r[i,y] ~ dnorm(afr.x[i],afr.tau[i])   # need F (fecundity, not recov!) for each year, but last lambda not used, af.r is mean growth rate from above
