@@ -1,40 +1,4 @@
-#--------------------------------------------------------------------------------------------------------------
-# This is the integration of Lincoln estimation into the SS model itself via binomial distribution (i.e. Matt's way)
-# Needs verification
-# Based on simple dataset (AMWO harvest.csv)--can't decompose vital rates with this one
-# Code sent 1/20/17
-#--------------------------------------------------------------------------------------------------------------
 
-# Lincoln Estimates for American Woodcock
-# Todd Arnold, Univ. of Minnesota, arnol065@umn.edu
-rm(list=ls(all=TRUE)) # clear memory
-
-# load R2WinBUGS, set working directory for data and output, and identify WinBUGS location for your computer
-library(jagsUI)
-setwd("C:/Users/arnol065/Documents/Publications/AMWO IPM") 
-
-# LOAD DATA #
-harvest <- read.csv("AMWO harvest.csv",header=TRUE)
-
-# read data into proper matrix for jags
-Central <- matrix(0,nrow=49,ncol=12,byrow=TRUE)
-Eastern <- matrix(0,nrow=49,ncol=12,byrow=TRUE)
-
-for (i in 1:49){
-  Central[i,1] <- harvest[i,1]  # year for C region
-  Eastern[i,1] <- harvest[(i+49),1]  # year for E region
-  for (j in 2:12){
-    Central[i,j] <- harvest[(i),(j+12)] #harvest column to local recovs column from dataset
-    Eastern[i,j] <- harvest[(i+49),(j+12)] 
-  } # close j
-  } # close i
-
-head(Central)   #some NAs in data; 12 columns, 49 rows each
-tail(Eastern)
-
-# specify bugs model
-sink("Lincoln.bug")
-cat("
     model {
   # priors for initial population sizes (mean first 5 years Lincoln, SD 100,000)
     af.N[1,1] ~ dnorm(720000,1E-10) #assuming these come from previous Lincoln analysis; adult female central (1)
@@ -127,38 +91,4 @@ cat("
 
 
   } # end bugs model
-    ",fill = TRUE)
-sink()
-
-# Bundle data  , add 1 to harvest, banding and recovery totals, per Seber's small-sample modification
-bugs.data <- list(yrs = 49, C.af.H=trunc(Central[,2]+1), E.af.H=trunc(Eastern[,2]+1), 
-                  C.am.H=trunc(Central[,3]+1), E.am.H=trunc(Eastern[,3]+1), 
-                  C.juv.H=trunc(Central[,4]+1), E.juv.H=trunc(Eastern[,4]+1), 
-                  C.af.B=Central[,5]+1, E.af.B=Eastern[,5]+1, 
-                  C.am.B=Central[,6]+1, E.am.B=Eastern[,6]+1, 
-                  C.juv.B=Central[,7]+1, E.juv.B=Eastern[,7]+1, 
-                  C.loc.B=Central[,8]+1, E.loc.B=Eastern[,8]+1, 
-                  C.af.R=Central[,9]+1, E.af.R=Eastern[,9]+1, 
-                  C.am.R=Central[,10]+1, E.am.R=Eastern[,10]+1, 
-                  C.juv.R=Central[,11]+1, E.juv.R=Eastern[,11]+1, 
-                  C.loc.R=Central[,12]+1, E.loc.R=Eastern[,12]+1)
-
-# Initial values (not all priors listed)
-inits <- function(){list(f.af.x=c(rep(0.05,2)),f.am.x=c(rep(0.05,2)),f.juv.x=c(rep(0.05,2)))}  
-
-# Parameters monitored
-parameters <- c("F.x", "afr.x", "amr.x", "f.af.x", "f.am.x", "f.juv.x", "s.loc.x", 
-                "af.N","am.N","juv.N")
-
-# MCMC settings (just trying to get this to move)
-ni <- 150000
-nt <- 10        
-nb <- 50000
-nc <- 3
-
-# hangs on first estimate
-ABDU.Lincoln.jags <- jagsUI(bugs.data, inits, parameters, "Lincoln.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel=TRUE)
-
-print(ABDU.Lincoln.jags, digits = 1)
-
-
+    
