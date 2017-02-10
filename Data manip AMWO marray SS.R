@@ -97,7 +97,6 @@ colnames(clean)<-c("bSeason","bYear","rYear","region","age","class","dummy")
 Year<-unique(clean$bYear)
 Year<-sort(Year)  #SS added because needs to be chronological or else will have values below diagnol?
 NbYear<-length(Year)
-NYear<-length(Year)
 Season<-unique(clean$bSeason)
 NSeason<-length(Season)
 Class<-unique(clean$class)
@@ -107,21 +106,17 @@ Region<-unique(clean$region)
 Region<-sort(Region)       #SS sorted
 NRegion<-length(Region)
 
-awc<-array(NA,dim=c(NYear,NYear,NSeason,NClass,NRegion),
-           dimnames =list(Year, Year, c("spring","not_spring"),
-                       c("local","Hatch_Year","Adult_Male","Adult_Female"),
-                       c("Eastern","Central")))
+awc<-array(NA,dim=c(NbYear,NbYear,NSeason,NClass,NRegion))
 for (s in 1:NSeason){
   for (cc in 1:NClass){
     for (i in 1:NRegion){
-      for (b in 1:NYear){
-        for (r in 1:NYear){
-                awc[b,r,s,cc,i]<-sum(clean[clean$bYear==Year[b]&clean$rYear==Year[r]&clean$class==Class[cc]&clean$region==Region[i],7])
-                }}}}}
+      for (b in 1:NbYear){
+        for (r in 1:NbYear){
+          awc[b,r,s,cc,i]<-sum(clean[clean$bYear==Year[b]&clean$rYear==Year[r]&clean$class==Class[cc]&clean$region==Region[i],7])
+        }}}}}
 
 #take a look at subset of giant marray
 awc[1:20,1:20,1,1,1]
 
 #are these the correct dimensions that we want?? or do we want to merge all age classes together into same marray? 2 separate
 #marrays for the 2 seasons, right? and regions, right?
-
