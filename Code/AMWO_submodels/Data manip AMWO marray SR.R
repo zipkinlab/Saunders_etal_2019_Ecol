@@ -128,25 +128,9 @@ awc[1:20,1:20,1,3,1]
 
 save(awc, file="AMWO_Marray.rda")
 
-#Creating separate M-Array that is more compatible with Todd's example
-#Will need to be finished at a later date
-awc.todd <- array(NA, dim=c(2*NYear, NYear, NClass, NRegion),
-                  dimnames =list(Year, Year,
-                                 c("local","Hatch_Year","Adult_Male","Adult_Female"),
-                                 c("Eastern","Central")))
-
-  for (cc in 1:NClass){
-    for (i in 1:NRegion){
-      for (b in 1:NYear){
-        for (r in 1:NYear){
-          awc.todd[b,r,cc,i]<-sum(clean[clean$bYear==Year[b]&clean$rYear==Year[r]&clean$class==Class[cc]&clean$region==Region[i],7])
-        }}}}
-
-save(awc.todd, file="AMWO_Todd_Marray.rda")
-
 #---------------------------------------------------------------------------
 #need to add last column of unrecovered individuals to marray
-#THIS IS NOT FINISHED YET EITHER
+#THIS IS NOT FINISHED YET!! (ignore)
 #---------------------------------------------------------------------------
 #bring in bandings file
 bands<-read.csv("AMWO bandings.csv")
