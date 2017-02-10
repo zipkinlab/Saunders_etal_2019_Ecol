@@ -66,7 +66,7 @@ raw <- raw[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(5:6)),]
 # 1=local, 2=juv, 3=male, 4=female
 clean[,6]<-NA
 clean[clean[,5]%in%1:2,6]<-clean[clean[,5]%in%1:2,5]
-clean[raw$Sex..VSEX%in%c("Male","Male; from subsequent encounter")&clean[,5]==3,6]<-4
+clean[raw$Sex..VSEX%in%c("Male","Male; from subsequent encounter")&clean[,5]==3,6]<-3
 clean[raw$Sex..VSEX%in%c("Female","Female; from subsequent encounter")&clean[,5]==3,6]<-4
 #remove unknown adults
 raw<-raw[!(is.na(clean[,6])&clean[,5]==3),]
@@ -82,7 +82,7 @@ colnames(clean)<-c("bSeason","bYear","rYear","region","age","class","dummy")
 #create the marray
 ########################################################################
 Year<-unique(clean$bYear)
-NbYear<-length(bYear)
+NYear<-length(Year)
 Season<-unique(clean$bSeason)
 NSeason<-length(Season)
 Class<-unique(clean$class)
@@ -90,11 +90,16 @@ NClass<-length(Class)
 Region<-unique(clean$region)
 NRegion<-length(Region)
 
-awc<-array(NA,dim=c(NbYear,NbYear,NSeason,NClass,NRegion))
+awc<-array(NA,dim=c(NYear,NYear,NSeason,NClass,NRegion),
+           dimnames =list(Year, Year, c("spring","not_spring"),
+                       c("local","Hatch_Year","Adult_Male","Adult_Female"),
+                       c("Eastern","Central")))
 for (s in 1:NSeason){
   for (cc in 1:NClass){
     for (i in 1:NRegion){
-      for (b in 1:NbYear){
-        for (r in 1:NbYear){
+      for (b in 1:NYear){
+        for (r in 1:NYear){
                 awc[b,r,s,cc,i]<-sum(clean[clean$bYear==Year[b]&clean$rYear==Year[r]&clean$class==Class[cc]&clean$region==Region[i],7])
-                }}}}}
+        }}}}}
+
+
