@@ -28,7 +28,7 @@ clean[raw$B.Month<=6,]<-1  #shouldn't we change this to between 4 and 6?
 clean[raw$B.Month>6,]<-2   #shouldn't we change this to between 7 and 9?
 
 #Bring in B.year
-clean[,2]<-raw$B.Year  #but we only want to start with 1963!
+clean[,2]<-raw$B.Year  
 
 #bring in recovery year and account for recoveries occurring in Jan-March
 clean[,3]<-NA
@@ -95,8 +95,7 @@ colnames(clean)<-c("bSeason","bYear","rYear","region","age","class","dummy")
 #create the marray
 ########################################################################
 Year<-unique(clean$bYear)
-Year<-sort(Year)  #SS added because needs to be chronological or else will have values below diagnol?
-NbYear<-length(Year)
+Year<-sort(Year)  #SS added because needs to be chronological or else will have values below diagonal right?
 NYear<-length(Year)
 Season<-unique(clean$bSeason)
 NSeason<-length(Season)
@@ -125,3 +124,4 @@ awc[1:20,1:20,1,1,1]
 #are these the correct dimensions that we want?? or do we want to merge all age classes together into same marray? 2 separate
 #marrays for the 2 seasons, right? and regions, right?
 
+save(awc, file="AMWO_Marray.rda")
