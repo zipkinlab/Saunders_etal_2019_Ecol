@@ -4,7 +4,6 @@
 rm(list=ls())
 # Read in dataset
 #raw.data<-read.csv(file.choose())
-#raw<-read.csv("~/Google Drive/AMWO IPM/Datasets/M array table AMWO CSV.csv")
 raw<-read.csv("AMWO recoveries.csv")  #reading in CSV from GitHub-linked timberdoodle folder
 
 ########################################################################
@@ -21,16 +20,22 @@ raw<-subset(raw,How.Obt==1)
 #only use B.Year from 1963 onwards
 raw<-subset(raw,B.Year>=1963)
 
+#subset B.Month between 4 and 9 to cover our 2 seasons
+raw<-subset(raw,B.Month>=4&B.Month<=9)
+
+#take out recoveries in March
+raw<-subset(raw,R.Month!=3)
+
 #bring in B.month, convert to season
 clean<-matrix(NA,nrow=length(raw$B.Month),ncol=1)
 clean<-data.frame(clean)
-clean[raw$B.Month<=6,]<-1  #shouldn't we change this to between 4 and 6?
-clean[raw$B.Month>6,]<-2   #shouldn't we change this to between 7 and 9?
+clean[raw$B.Month>=4&raw$B.Month<=6,]<-1  
+clean[raw$B.Month>=7&raw$B.Month<=9,]<-2
 
 #Bring in B.year
 clean[,2]<-raw$B.Year  
 
-#bring in recovery year and account for recoveries occurring in Jan-March
+#bring in recovery year and account for recoveries occurring in Jan-Feb
 clean[,3]<-NA
 clean[raw$R.Month>=4,3]<-raw[raw$R.Month>=4,"R.Year"]
 #adjust if you don't want to include birds recovered in March
@@ -45,14 +50,17 @@ clean[raw$B.Flyway==6&raw$BRegion..STA%in%c("ONT"),4]<-2
 
 #bring in R region, this is only to exlude region crossers
 clean[,5]<-0 #specify different number from previous step to flag it in the next step
-clean[raw$B.Flyway==1,5]<-1
-clean[raw$B.Flyway%in%2:3,5]<-2
-clean[raw$B.Flyway==6&raw$BRegion..STA%in%c("QC","NS","NB","PE","NF","PQ"),5]<-1
-clean[raw$B.Flyway==6&raw$BRegion..STA%in%c("ONT"),5]<-2
+clean[raw$R.Flyway==1,5]<-1
+clean[raw$R.Flyway%in%2:3,5]<-2
+clean[raw$R.Flyway==6&raw$RRegion..STA%in%c("QC","NS","NB","PE","NF","PQ"),5]<-1
+clean[raw$R.Flyway==6&raw$RRegion..STA%in%c("ONT"),5]<-2
 
 # pull out places you don't care about
-raw<-raw[clean$V4!=0|clean$V5!=0,]
-clean<-clean[clean$V4!=0|clean$V5!=0,]
+#raw<-raw[clean$V4!=0|clean$V5!=0,]
+#test<-clean[clean$V4==0|clean$V5==0,]
+# removes lines of region crossers
+raw<-raw[clean$V4==clean$V5,]
+clean<-clean[clean$V4==clean$V5,]
 clean<-clean[,1:4] #remove R.state becuase it is redundant 
 
 #bring in age
@@ -69,38 +77,35 @@ clean[raw$Age..VAGE=="Local",5]<-1
 raw<-raw[!is.na(clean[,5]),]
 clean<-clean[!is.na(clean[,5]),]
 
-# get rid of hatch years in months 5 and 6
-clean <- clean[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(5:6)),]
-raw <- raw[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(5:6)),]
+# get rid of hatch years in months 4, 5 and 6
+clean <- clean[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(4:6)),]
+raw <- raw[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(4:6)),]
 
-#bring in sex and convert to age class
+#bring in sex and convert to age class so this is more like a sex-ageclass column
 # 1=local, 2=juv, 3=male, 4=female
 clean[,6]<-NA
-clean[clean[,5]%in%1:2,6]<-clean[clean[,5]%in%1:2,5]     #is this line right? should second 5 be 6?
+clean[clean[,5]%in%1:2,6]<-clean[clean[,5]%in%1:2,5]     
 clean[raw$Sex..VSEX%in%c("Male","Male; from subsequent encounter")&clean[,5]==3,6]<-3
 clean[raw$Sex..VSEX%in%c("Female","Female; from subsequent encounter")&clean[,5]==3,6]<-4
 
-#remove unknown adults for now? Can treat unknowns via mixtures acc. to Todd
+#remove unknown adults for now--only losing 20 individuals if we don't include them
 raw<-raw[!(is.na(clean[,6])&clean[,5]==3),]
 clean<-clean[!(is.na(clean[,6])&clean[,5]==3),]
 
-# remove unwanted banding periods (Oct-Dec) for now
-clean<-clean[!raw$B.Month%in%c(10:12,1:3),]
-raw<-raw[!raw$B.Month%in%c(10:12,1:3),]
-
-
+#adding dummy column to use sum function below for marray
 clean[,7]<-1
 colnames(clean)<-c("bSeason","bYear","rYear","region","age","class","dummy")
+
 ########################################################################
 #create the marray
 ########################################################################
 Year<-unique(clean$bYear)
-Year<-sort(Year)  #SS added because needs to be chronological or else will have values below diagonal right?
+Year<-sort(Year)          #SS sorted
 NYear<-length(Year)
 Season<-unique(clean$bSeason)
 NSeason<-length(Season)
 Class<-unique(clean$class)
-Class<-sort(Class)       #SS sorted
+Class<-sort(Class)        #SS sorted
 NClass<-length(Class)
 Region<-unique(clean$region)
 Region<-sort(Region)       #SS sorted
@@ -118,16 +123,30 @@ for (s in 1:NSeason){
                 awc[b,r,s,cc,i]<-sum(clean[clean$bYear==Year[b]&clean$rYear==Year[r]&clean$class==Class[cc]&clean$region==Region[i],7])
                 }}}}}
 
-#take a look at subset of giant marray
-awc[1:20,1:20,1,1,1]
-
-#are these the correct dimensions that we want?? or do we want to merge all age classes together into same marray? 2 separate
-#marrays for the 2 seasons, right? and regions, right?
+#take a look at subset of giant marray--basically this is 16 marrays
+awc[1:20,1:20,1,3,1]
 
 save(awc, file="AMWO_Marray.rda")
 
+#Creating separate M-Array that is more compatible with Todd's example
+#Will need to be finished at a later date
+awc.todd <- array(NA, dim=c(2*NYear, NYear, NClass, NRegion),
+                  dimnames =list(Year, Year,
+                                 c("local","Hatch_Year","Adult_Male","Adult_Female"),
+                                 c("Eastern","Central")))
+
+  for (cc in 1:NClass){
+    for (i in 1:NRegion){
+      for (b in 1:NYear){
+        for (r in 1:NYear){
+          awc.todd[b,r,cc,i]<-sum(clean[clean$bYear==Year[b]&clean$rYear==Year[r]&clean$class==Class[cc]&clean$region==Region[i],7])
+        }}}}
+
+save(awc.todd, file="AMWO_Todd_Marray.rda")
+
 #---------------------------------------------------------------------------
 #need to add last column of unrecovered individuals to marray
+#THIS IS NOT FINISHED YET EITHER
 #---------------------------------------------------------------------------
 #bring in bandings file
 bands<-read.csv("AMWO bandings.csv")
