@@ -76,7 +76,7 @@ raw <- raw[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(5:6)),]
 #bring in sex and convert to age class
 # 1=local, 2=juv, 3=male, 4=female
 clean[,6]<-NA
-clean[clean[,5]%in%1:2,6]<-clean[clean[,5]%in%1:2,5]
+clean[clean[,5]%in%1:2,6]<-clean[clean[,5]%in%1:2,5]     #is this line right? should second 5 be 6?
 clean[raw$Sex..VSEX%in%c("Male","Male; from subsequent encounter")&clean[,5]==3,6]<-3
 clean[raw$Sex..VSEX%in%c("Female","Female; from subsequent encounter")&clean[,5]==3,6]<-4
 
@@ -125,3 +125,69 @@ awc[1:20,1:20,1,1,1]
 #marrays for the 2 seasons, right? and regions, right?
 
 save(awc, file="AMWO_Marray.rda")
+
+#---------------------------------------------------------------------------
+#need to add last column of unrecovered individuals to marray
+#---------------------------------------------------------------------------
+#bring in bandings file
+bands<-read.csv("AMWO bandings.csv")
+
+#need to summarize bandings according to: banding year, region, class, season
+
+#only use status 3 birds
+bands<-subset(bands,Status==3)
+
+#only use B.Year from 1963 onwards
+bands<-subset(bands,B.Year>=1963)
+
+#bring in B.month, convert to season
+clean<-matrix(NA,nrow=length(bands$B.Month),ncol=1)
+clean<-data.frame(clean)
+clean[bands$B.Month<=6,]<-1  #shouldn't we change this to between 4 and 6?
+clean[bands$B.Month>6,]<-2   #shouldn't we change this to between 7 and 9?
+
+#Bring in B.year
+clean[,2]<-bands$B.Year  
+
+#bring in B region
+clean[,3]<-0
+clean[bands$B.Flyway==1,3]<-1
+clean[bands$B.Flyway%in%2:3,3]<-2
+clean[bands$B.Flyway==6&bands$BRegion..STA%in%c("QC","NS","NB","PE","NF","PQ"),3]<-1
+clean[bands$B.Flyway==6&bands$BRegion..STA%in%c("ONT"),3]<-2
+
+# pull out places you don't care about
+bands<-bands[clean$V3!=0,]
+clean<-clean[clean$V3!=0,]
+clean<-clean[,1:3] #remove R.state becuase it is redundant 
+
+#bring in age
+# local = 1, hatch year = 2, adult = 3
+clean[,4]<-NA
+clean[bands$Age..VAGE=="After Hatch Year",4]<-3
+clean[bands$Age..VAGE=="After Second Year",4]<-3
+clean[bands$Age..VAGE=="After Third Year",4]<-3
+clean[bands$Age..VAGE=="Second Year",4]<-3
+clean[bands$Age..VAGE=="Unknown",4]<-NA
+clean[bands$Age..VAGE=="Hatch Year",4]<-2
+clean[bands$Age..VAGE=="Local",4]<-1
+#remove unknowns
+bands<-bands[!is.na(clean[,4]),]
+clean<-clean[!is.na(clean[,4]),]
+
+# get rid of hatch years in months 5 and 6
+clean <- clean[!(bands$Age..VAGE=="Hatch Year"&bands$B.Month%in%c(5:6)),]
+bands <- bands[!(bands$Age..VAGE=="Hatch Year"&bands$B.Month%in%c(5:6)),]
+
+#bring in sex and convert to age class
+# 1=local, 2=juv, 3=male, 4=female
+
+
+
+
+#remove unknown adults for now? Can treat unknowns via mixtures acc. to Todd
+
+
+# remove unwanted banding periods (Oct-Dec) for now
+
+
