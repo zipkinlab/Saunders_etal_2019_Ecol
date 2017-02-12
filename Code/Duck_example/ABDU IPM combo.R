@@ -137,9 +137,9 @@ for (i in 1:40){
 #-BUGS Model-#
 #------------#
 
-sink("Lincoln.bug")
+sink("Harvest.txt")
 cat("
-    model {
+    model{
     
     # Priors and constraints for true proportions of population in each age-sex class 
     # given constraint of summing to 1, these 3 proportions fully describe the data each year
@@ -150,17 +150,6 @@ cat("
     pi.Can.juvF.mu ~ dunif(-1, 1)     
     pi.Can.adF.mu ~ dunif(-1, 1)      
     
-    # Priors and constraints, for logit link on f
-    f.pre.juvF.mu ~ dunif(-6, 0)       # priors for mean Brownie recovery (bounded 0, 0.5)
-    f.pre.adF.mu ~ dunif(-6, 0)        
-    f.post.combF.mu ~ dunif(-6, 0)     # harvest is mixed, so pooled recov rate  
-    f.pre.juvM.mu ~ dunif(-6, 0)       
-    f.pre.adM.mu ~ dunif(-6, 0)        
-    f.post.combM.mu ~ dunif(-6, 0) 
-    #SS: we will be estimating a combined 'correction factor' instead of values below
-    report <- 0.506                 # reporting rate (Conroy & Blandin, fixed, can estimate in joint analysis)
-    harv.adj <- 0.72                 # harvest adjustment (Padding & Royle, adjust for positive bias in US harvest)
-    
     pi.US.juv.sd ~ dunif(0, 1)       # prior for annual SD
     pi.US.juvF.sd ~ dunif(0, 1)      
     pi.US.adF.sd ~ dunif(0, 1)       
@@ -168,29 +157,13 @@ cat("
     pi.Can.juvF.sd ~ dunif(0, 1)      
     pi.Can.adF.sd ~ dunif(0, 1)       
     
-    # priors for annual SD of annual recovery rate (logit scale)
-    f.pre.juvF.sd ~ dunif(0,2)       
-    f.pre.adF.sd ~ dunif(0,2)        
-    f.post.combF.sd ~ dunif(0,2)       
-    f.pre.juvM.sd ~ dunif(0,2)       
-    f.pre.adM.sd ~ dunif(0,2)        
-    f.post.combM.sd ~ dunif(0,2)       
-    
     pi.US.juv.tau <- pow(pi.US.juv.sd,-2)       # convert to tau
     pi.US.juvF.tau <- pow(pi.US.juvF.sd,-2)      
     pi.US.adF.tau <- pow(pi.US.adF.sd,-2)       
     pi.Can.juv.tau <- pow(pi.Can.juv.sd,-2)       
     pi.Can.juvF.tau <- pow(pi.Can.juvF.sd,-2)      
     pi.Can.adF.tau <- pow(pi.Can.adF.sd,-2)       
-    # express variances as precision (1/SD^2)
-    f.pre.juvF.tau <- pow(f.pre.juvF.sd,-2)
-    f.pre.adF.tau  <- pow(f.pre.adF.sd,-2)
-    f.pre.juvM.tau  <- pow(f.pre.juvM.sd,-2)
-    f.pre.adM.tau  <- pow(f.pre.adM.sd,-2)
-    f.post.combF.tau  <- pow(f.post.combF.sd,-2)
-    f.post.combM.tau  <- pow(f.post.combM.sd,-2)
     
-    # Generate annual parameter estimates 
     for (y in 1:yrs){
     logit.pi.US.juv[y] ~ dnorm(pi.US.juv.mu,pi.US.juv.tau)
     logit.pi.US.juvF[y] ~ dnorm(pi.US.juvF.mu,pi.US.juvF.tau)
@@ -198,24 +171,13 @@ cat("
     logit.pi.Can.juv[y] ~ dnorm(pi.Can.juv.mu,pi.Can.juv.tau)
     logit.pi.Can.juvF[y] ~ dnorm(pi.Can.juvF.mu,pi.Can.juvF.tau)
     logit.pi.Can.adF[y] ~ dnorm(pi.Can.adF.mu,pi.Can.adF.tau)
-    logit.f.pre.juvF[y] ~ dnorm(f.pre.juvF.mu,f.pre.juvF.tau)
-    logit.f.pre.adF[y] ~ dnorm(f.pre.adF.mu,f.pre.adF.tau)
-    logit.f.pre.juvM[y] ~ dnorm(f.pre.juvM.mu,f.pre.juvM.tau)
-    logit.f.pre.adM[y] ~ dnorm(f.pre.adM.mu,f.pre.adM.tau)
-    logit.f.post.combF[y] ~ dnorm(f.post.combF.mu,f.post.combF.tau)
-    logit.f.post.combM[y] ~ dnorm(f.post.combM.mu,f.post.combM.tau)
+    
     logit(pi.US.juv[y]) <- logit.pi.US.juv[y]
     logit(pi.US.juvF[y]) <- logit.pi.US.juvF[y]
     logit(pi.US.adF[y]) <- logit.pi.US.adF[y]
     logit(pi.Can.juv[y]) <- logit.pi.Can.juv[y]
     logit(pi.Can.juvF[y]) <- logit.pi.Can.juvF[y]
     logit(pi.Can.adF[y]) <- logit.pi.Can.adF[y]
-    logit(f.pre.juvF[y]) <- logit.f.pre.juvF[y]
-    logit(f.pre.adF[y]) <- logit.f.pre.adF[y]
-    logit(f.pre.juvM[y]) <- logit.f.pre.juvM[y]
-    logit(f.pre.adM[y]) <- logit.f.pre.adM[y]
-    logit(f.post.combF[y]) <- logit.f.post.combF[y]
-    logit(f.post.combM[y]) <- logit.f.post.combM[y]
     }
     
     #Calculate age and sex probability
@@ -239,13 +201,97 @@ cat("
     Harv.AdF.US[y] <- (1-pi.US.juv[y])*pi.US.adF[y]*US.Harvest[y,12]*harv.adj
     Harv.AdM.US[y] <- (1-pi.US.juv[y])*(1-pi.US.adF[y])*US.Harvest[y,12]*harv.adj
     
+    
+    H.juvF.fall[y] <- Harv.JuvF.Can[y] + Harv.JuvF.US[y]
+    H.adF.fall[y] <- Harv.AdF.Can[y] + Harv.AdF.US[y]
+    H.juvM.fall[y] <- Harv.JuvM.Can[y] + Harv.JuvM.US[y]
+    H.adM.fall[y] <- Harv.AdM.Can[y] + Harv.AdM.US[y]
+    H.combF.spring[y] <- Harv.AdF.Can[y] + Harv.AdF.US[y]
+    H.combM.spring[y] <- Harv.AdM.Can[y] + Harv.AdM.US[y]
+    }
+    
+    }
+    ", fill=TRUE)
+sink()
 
-    H.juvF.fall[y] <- round(Harv.JuvF.Can[y] + Harv.JuvF.US[y])
-    H.adF.fall[y] <- round(Harv.AdF.Can[y] + Harv.AdF.US[y])
-    H.juvM.fall[y] <- round(Harv.JuvM.Can[y] + Harv.JuvM.US[y])
-    H.adM.fall[y] <- round(Harv.AdM.Can[y] + Harv.AdM.US[y])
-    H.combF.spring[y] <- round(Harv.AdF.Can[y] + Harv.AdF.US[y])
-    H.combM.spring[y] <- round(Harv.AdM.Can[y] + Harv.AdM.US[y])
+# Bundle data
+bugs.data <- list(US.Harvest=US.harvest, Can.Harvest=Can.harvest, US.wings=US.wings, Can.wings=Can.wings, yrs = 20,
+                  US.known.age = US.wings[,7]+US.wings[,8], US.sexed.juv = US.wings[,4]+US.wings[,5],
+                  US.sexed.ad = US.wings[,1]+US.wings[,2], Can.known.age = Can.wings[,7]+Can.wings[,8],
+                  Can.sexed.juv = Can.wings[,4]+Can.wings[,5], Can.sexed.ad = Can.wings[,1]+Can.wings[,2], harv.adj = 0.72)
+
+# Initial values (not all priors listed)
+inits <- function(){list(pi.US.juv.mu = runif(1, -1, 1), pi.US.juvF.mu = runif(1, -1, 1), pi.US.adF.mu = runif(1, -1, 1),
+                         pi.US.juv.sd = runif(1, 0, 1), pi.US.juvF.sd = runif(1, 0, 1), pi.US.adF.sd = runif(1,0,1), 
+                         pi.Can.juv.mu = runif(1, -1, 2), pi.Can.juvF.mu = runif(1, -1, 1), pi.Can.adF.mu = runif(1, -1, 1),
+                         pi.Can.juv.sd = runif(1, 0, 1), pi.Can.juvF.sd = runif(1, 0, 1), pi.Can.adF.sd = runif(1,0,1))}
+
+# Parameters monitored   
+parameters <- c("H.juvF.fall", "H.adF.fall", "H.juvM.fall", "H.adM.fall", "H.combF.spring", "H.combM.spring")
+
+# MCMC settings
+ni <- 12000
+nt <- 1
+nb <- 2000
+nc <- 3
+
+Harvest.out <- jagsUI(bugs.data, inits, parameters, "Harvest.txt", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb)
+
+
+H.juvF.fall <- round(Harvest.out$mean$H.juvF.fall)
+H.adF.fall <- round(Harvest.out$mean$H.adF.fall)
+H.juvM.fall <- round(Harvest.out$mean$H.juvM.fall)
+H.adM.fall <- round(Harvest.out$mean$H.adM.fall)
+H.combF.spring <- round(Harvest.out$mean$H.combF.spring)
+H.combM.spring <- round(Harvest.out$mean$H.combM.spring)
+
+#################################################################################################################################
+
+sink("IPM.txt")
+cat("
+    model {
+    
+    
+    # Priors and constraints, for logit link on f
+    f.pre.juvF.mu ~ dunif(-6, 0)       # priors for mean Brownie recovery (bounded 0, 0.5)
+    f.pre.adF.mu ~ dunif(-6, 0)        
+    f.post.combF.mu ~ dunif(-6, 0)     # harvest is mixed, so pooled recov rate  
+    f.pre.juvM.mu ~ dunif(-6, 0)       
+    f.pre.adM.mu ~ dunif(-6, 0)        
+    f.post.combM.mu ~ dunif(-6, 0) 
+    #SS: we will be estimating a combined 'correction factor' instead of values below
+    report <- 0.506                 # reporting rate (Conroy & Blandin, fixed, can estimate in joint analysis)
+    
+    # priors for annual SD of annual recovery rate (logit scale)
+    f.pre.juvF.sd ~ dunif(0,2)       
+    f.pre.adF.sd ~ dunif(0,2)        
+    f.post.combF.sd ~ dunif(0,2)       
+    f.pre.juvM.sd ~ dunif(0,2)       
+    f.pre.adM.sd ~ dunif(0,2)        
+    f.post.combM.sd ~ dunif(0,2)       
+    
+    # express variances as precision (1/SD^2)
+    f.pre.juvF.tau <- pow(f.pre.juvF.sd,-2)
+    f.pre.adF.tau  <- pow(f.pre.adF.sd,-2)
+    f.pre.juvM.tau  <- pow(f.pre.juvM.sd,-2)
+    f.pre.adM.tau  <- pow(f.pre.adM.sd,-2)
+    f.post.combF.tau  <- pow(f.post.combF.sd,-2)
+    f.post.combM.tau  <- pow(f.post.combM.sd,-2)
+    
+    # Generate annual parameter estimates 
+    for (y in 1:yrs){
+    logit.f.pre.juvF[y] ~ dnorm(f.pre.juvF.mu,f.pre.juvF.tau)
+    logit.f.pre.adF[y] ~ dnorm(f.pre.adF.mu,f.pre.adF.tau)
+    logit.f.pre.juvM[y] ~ dnorm(f.pre.juvM.mu,f.pre.juvM.tau)
+    logit.f.pre.adM[y] ~ dnorm(f.pre.adM.mu,f.pre.adM.tau)
+    logit.f.post.combF[y] ~ dnorm(f.post.combF.mu,f.post.combF.tau)
+    logit.f.post.combM[y] ~ dnorm(f.post.combM.mu,f.post.combM.tau)
+    logit(f.pre.juvF[y]) <- logit.f.pre.juvF[y]
+    logit(f.pre.adF[y]) <- logit.f.pre.adF[y]
+    logit(f.pre.juvM[y]) <- logit.f.pre.juvM[y]
+    logit(f.pre.adM[y]) <- logit.f.pre.adM[y]
+    logit(f.post.combF[y]) <- logit.f.post.combF[y]
+    logit(f.post.combM[y]) <- logit.f.post.combM[y]
     }
     
     # Generate direct recovery rates
@@ -274,13 +320,6 @@ cat("
     H.juvM.fall[y] ~ dbin(h.pre.juvM[y], N.juvM.fall[y])
     H.adM.fall[y] ~ dbin(h.pre.adM[y], N.adM.fall[y])
     H.combM.spring[y] ~ dbin(h.post.combM[y], N.combM.spring[y])
-
-    #N.total.fall[y] <- N.juvF.fall[y] + N.juvM.fall[y] + N.adF.fall[y] + N.adM.fall[y]
-    #N.total.spring[y] <- N.combF.spring[y] + N.combM.spring[y]
-    #fecundity[y] <- 0.5*(N.juvF.fall[y]+N.juvM.fall[y])/N.adF.fall[y]
-    #sex.ratio.juv[y] <- N.juvM.fall[y]/(N.juvF.fall[y]+N.juvM.fall[y])
-    #sex.ratio.ad.fall[y] <- N.adM.fall[y]/(N.adF.fall[y]+N.adM.fall[y])
-    #sex.ratio.comb.spring[y] <- N.combM.spring[y]/(N.combF.spring[y]+N.combM.spring[y])
     
     }
 
@@ -290,8 +329,8 @@ cat("
 #---------------------------------------------
 
 # observed initial Lincoln estimates/1000 (N) for combined juv + adult females (af) and males (am)
-N.combF.spring[1] ~ dpois(958.3)    
-N.combM.spring[1] ~ dpois(1033.9)
+N.combF.spring[1] ~ dpois(930000)    
+N.combM.spring[1] ~ dpois(1080000)
 
 # uniform 0-1 priors for logit survival (s) and Brownie recovery (f) rates (Koons & Schaub 2015)
 s.af.sum.mu ~ dunif(0,1)                            
@@ -310,16 +349,6 @@ s.jf.win.mu ~ dunif(0,1)
 ls.jf.win.mu <- log(s.jf.win.mu/(1-s.jf.win.mu))    
 s.jm.win.mu ~ dunif(0,1)                            
 ls.jm.win.mu <- log(s.jm.win.mu/(1-s.jm.win.mu))    
-
-#DELETE?
-#f.af.mu ~ dunif(0,0.3)                            
-#lf.af.mu <- log(f.af.mu/(1-f.af.mu))    
-#f.am.mu ~ dunif(0,0.3)                            
-#lf.am.mu <- log(f.am.mu/(1-f.am.mu))    
-#f.jf.mu ~ dunif(0,0.3)                            
-#lf.jf.mu <- log(f.jf.mu/(1-f.jf.mu))    
-#f.jm.mu ~ dunif(0,0.3)                            
-#lf.jm.mu <- log(f.jm.mu/(1-f.jm.mu))    
 
 #### Revisit this, F with added parameter for sex ratio at fledge
 F.jf.mu ~ dunif(0.5,2.5)      # prior for mean fecundity rates (F sex spec because fall sex ratio unbalanced)
@@ -354,12 +383,6 @@ s.jm.sum.tau <- pow(s.jm.sum.sd,-2)
 s.jf.win.tau <- pow(s.jf.win.sd,-2)                            
 s.jm.win.tau <- pow(s.jm.win.sd,-2)                            
 
-#DELETE?
-#f.af.tau <- pow(f.af.sd,-2)                            
-#f.am.tau <- pow(f.am.sd,-2)                            
-#f.jf.tau <- pow(f.jf.sd,-2)                            
-#f.jm.tau <- pow(f.jm.sd,-2)                            
-
 F.jf.tau <- pow(F.jf.sd,-2)    
 F.jm.tau <- pow(F.jm.sd,-2)     
 
@@ -384,17 +407,6 @@ for (y in 1:yrs){
   logit(s.jf.win[y]) <- logit.s.jf.win[y] 
   logit.s.jm.win[y] ~ dnorm(ls.jm.win.mu,s.jm.win.tau)
   logit(s.jm.win[y]) <- logit.s.jm.win[y] 
-  
-#DELETE?
-  #logit.f.af[y] ~ dnorm(lf.af.mu,f.af.tau)
-  #logit(f.af[y]) <- logit.f.af[y] 
-  #logit.f.am[y] ~ dnorm(lf.am.mu,f.am.tau)
-  #logit(f.am[y]) <- logit.f.am[y] 
-  #logit.f.jf[y] ~ dnorm(lf.jf.mu,f.jf.tau)
-  #logit(f.jf[y]) <- logit.f.jf[y] 
-  #logit.f.jm[y] ~ dnorm(lf.jm.mu,f.jm.tau)
-  #logit(f.jm[y]) <- logit.f.jm[y] 
-  
 
   Fecun.jf[y] ~ dnorm(F.jf.mu,F.jf.tau) 
   F.jf[y] <-max(0,Fecun.jf[y])                # avoiding I(0,) format
@@ -424,18 +436,18 @@ N.juvF.fall[1] <- round(N.adF.fall[1] * F.jf[1])
 N.juvM.fall[1] <- round(N.adF.fall[1] * F.jm[1])
 
 for (t in 2:yrs){
-N.adF.spring[t] <- N.adF.fall[t-1] * s.af.win[t-1]
-N.adM.spring[t] <- N.adM.fall[t-1] * s.am.win[t-1]
-N.juvF.spring[t] <- N.juvF.fall[t-1] * s.jf.win[t-1]
-N.juvM.spring[t] <- N.juvM.fall[t-1] * s.jm.win[t-1]
+N.adF.spring[t] <- round(N.adF.fall[t-1] * s.af.win[t-1])
+N.adM.spring[t] <- round(N.adM.fall[t-1] * s.am.win[t-1])
+N.juvF.spring[t] <- round(N.juvF.fall[t-1] * s.jf.win[t-1])
+N.juvM.spring[t] <- round(N.juvM.fall[t-1] * s.jm.win[t-1])
 # combined ad + juv population is what Lincoln (and BPOP) estimates
-N.combF.spring[t] <- N.adF.spring[t] + N.juvF.spring[t]        
-N.combM.spring[t] <- N.adM.spring[t] + N.juvM.spring[t]        
+N.combF.spring[t] <- round(N.adF.spring[t] + N.juvF.spring[t])        
+N.combM.spring[t] <- round(N.adM.spring[t] + N.juvM.spring[t])        
 # juveniles (yearlings) graduate to adults in this step
-N.adF.fall[t] <- N.adF.spring[t] * s.af.sum[t]  + N.juvF.spring[t] * s.jf.sum[t]
-N.adM.fall[t] <- N.adM.spring[t] * s.am.sum[t]  + N.juvM.spring[t] * s.jm.sum[t]
-N.juvF.fall[t] <- N.adF.fall[t] * F.jf[t]
-N.juvM.fall[t] <- N.adF.fall[t] * F.jm[t]
+N.adF.fall[t] <- round(N.adF.spring[t] * s.af.sum[t]  + N.juvF.spring[t] * s.jf.sum[t])
+N.adM.fall[t] <- round(N.adM.spring[t] * s.am.sum[t]  + N.juvM.spring[t] * s.jm.sum[t])
+N.juvF.fall[t] <- round(N.adF.fall[t] * F.jf[t])
+N.juvM.fall[t] <- round(N.adF.fall[t] * F.jm[t])
 }
 
 # Derived parms, more efficient to estimate from saved posteriors unless I want intrinsic correlations
@@ -604,40 +616,36 @@ for (t in 1:(2*yrs)){
 sink()
 
 # Bundle data
-bugs.data <- list(US.Harvest=US.harvest, Can.Harvest=Can.harvest, US.wings=US.wings, Can.wings=Can.wings, banded=banded, 
+bugs.data <- list(banded=banded, H.juvF.fall=H.juvF.fall, H.adF.fall=H.adF.fall, H.juvM.fall=H.juvM.fall,
+                  H.adM.fall=H.adM.fall, H.combF.spring=H.combF.spring, H.combM.spring=H.combM.spring,
                   marr.juvF.shot.R=marr.juvF.shot, marr.adF.shot.R=marr.adF.shot, marr.combF.shot.R=marr.combF.shot, 
                   marr.juvM.shot.R=marr.juvM.shot, marr.adM.shot.R=marr.adM.shot, marr.combM.shot.R=marr.combM.shot, 
                   marr.ad_unkF.shot=marr.ad_unkF.shot, marr.ad_unkM.shot=marr.ad_unkM.shot,
                   marr.juvF.shot=marr.juvF.shot, marr.juvM.shot=marr.juvM.shot,
                   rel.jf=rowSums(marr.juvF.shot), rel.af=rowSums(marr.ad_unkF.shot),
-                  rel.jm=rowSums(marr.juvM.shot), rel.am=rowSums(marr.ad_unkM.shot), yrs = 20,
-                  US.known.age = US.wings[,7]+US.wings[,8], US.sexed.juv = US.wings[,4]+US.wings[,5],
-                  US.sexed.ad = US.wings[,1]+US.wings[,2], Can.known.age = Can.wings[,7]+Can.wings[,8],
-                  Can.sexed.juv = Can.wings[,4]+Can.wings[,5], Can.sexed.ad = Can.wings[,1]+Can.wings[,2])
+                  rel.jm=rowSums(marr.juvM.shot), rel.am=rowSums(marr.ad_unkM.shot), yrs = 20)
 
 
 # Initial values (not all priors listed)
-inits <- function(){list(pi.US.juv.mu = runif(1, -1, 1), pi.US.juvF.mu = runif(1, -1, 1), pi.US.adF.mu = runif(1, -1, 1),
-                          pi.US.juv.sd = runif(1, 0, 1), pi.US.juvF.sd = runif(1, 0, 1), pi.US.adF.sd = runif(1,0,1), 
-                          pi.Can.juv.mu = runif(1, -1, 2), pi.Can.juvF.mu = runif(1, -1, 1), pi.Can.adF.mu = runif(1, -1, 1),
-                          pi.Can.juv.sd = runif(1, 0, 1), pi.Can.juvF.sd = runif(1, 0, 1), pi.Can.adF.sd = runif(1,0,1),
-                          s.af.sum.mu = runif(1,0,3), s.am.sum.mu = runif(1,0,3), s.jf.sum.mu = runif(1,0,3), s.jm.sum.mu = runif(1,0,3),
-                          s.af.win.mu = runif(1,0,3), s.am.win.mu = runif(1,0,3), s.jf.win.mu = runif(1,0,3), s.jm.win.mu = runif(1,0,3),
+inits <- function(){list( s.af.sum.mu = runif(1,0.45,0.75), s.am.sum.mu = runif(1,0.6,0.75), s.jf.sum.mu = runif(1,0.5,1), s.jm.sum.mu = runif(1,0.5,1),
+                          s.af.win.mu = runif(1,0.3,0.6), s.am.win.mu = runif(1,0,1), s.jf.win.mu = runif(1,0.6,1), s.jm.win.mu = runif(1,0.3,0.6),
                           F.jf.mu = runif(1,0.5,2), F.jm.mu = runif(1,0.5,2),   
-                          N.combF.spring=c(rpois(1,958.3),rep(NA,19)),
-                          N.combM.spring=c(rpois(1,1033.9),rep(NA,19)))}
+                          N.combF.spring=c(rpois(1,800000),rep(NA,19)),
+                          N.combM.spring=c(rpois(1,900000),rep(NA,19)))}
 
 # Parameters monitored   
 parameters <- c("N.adF.spring", "N.adM.spring", "N.adF.fall", "N.adM.fall",
                 "N.juvF.spring", "N.juvM.spring", "N.juvF.fall", "N.juvM.fall",
-                "s.af.sum", "s.af.win", "s.am.sum", "s.am.win", "s.jf.sum",
-                "s.jf.win", "s.jm.sum", "s.jm.win")
+                "N.combF.spring", "N.combM.spring", "s.af.sum", "s.af.win",
+                "s.jf.win", "s.jf.sum", "s.am.sum", "s.am.win", "s.jm.sum",
+                "s.jm.win")
 
 
 # MCMC settings (90 sec, converges rapidly, great mixing)
-ni <- 200
-nt <- 1        #10,000 posterior samples
-nb <- 0
-nc <- 1
+ni <- 100000
+nt <- 10        
+nb <- 50000
+nc <- 3
 
-ABDU.IPM.out <- jagsUI(bugs.data, inits, parameters, "Lincoln.bug", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb)
+ABDU.IPM.out <- jagsUI(bugs.data, initsv2, parameters, "IPM.txt", n.chains=nc,n.thin=nt,n.iter=ni,n.burnin=nb, store.data = FALSE, parallel = TRUE)
+
