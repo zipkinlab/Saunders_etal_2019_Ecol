@@ -333,6 +333,6 @@ for (s in 1:NSeason){
           }
            }}}}}
 
-#Final version of m-array including column of total individuals never recovered
-#WILL SAVE AFTER VERIFICATION OF TWA & SPS THAT THIS CODE IS CORRECT
-#save(marrayAMWO, file="marrayAMWO.R")
+#Above is the final version of the m-array including column of total individuals never recovered as final column
+#WILL SAVE AS R OBJECT AFTER VERIFICATION BY TA THAT THIS CODE IS CORRECT
+#save(marrayAMWO, file="marrayAMWO.rda")
