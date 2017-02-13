@@ -187,67 +187,98 @@ save(awc, file="AMWO_Marray.rda")
 
 #---------------------------------------------------------------------------
 #need to add last column of unrecovered individuals to marray
-#THIS IS NOT FINISHED YET!! (ignore)
 #---------------------------------------------------------------------------
 #bring in bandings file
-bands<-read.csv("AMWO bandings.csv")
+bands<-read.csv("AMWO bandings.csv")   #43,914 records
 
 #need to summarize bandings according to: banding year, region, class, season
 
 #only use status 3 birds
-bands<-subset(bands,Status==3)
+bands<-subset(bands,Status==3)                #43,351 records (563 excluded)
 
 #only use B.Year from 1963 onwards
-bands<-subset(bands,B.Year>=1963)
+bands<-subset(bands,B.Year>=1963)             #40,734 (2617 excluded)
+
+#subset B.Month between 4 and 9 to cover our 2 seasons
+bands<-subset(bands,B.Month>=4&B.Month<=9)    #34,251 records (6483 excluded)
+
+## TA added
+# remove radio transmitters (meta-analyses suggest survival and harvest effects)
+bands<-subset(bands,Add.Info!=89)
+bands<-subset(bands,Add.Info!=81)              #32,827 records (1424 excluded)
 
 #bring in B.month, convert to season
-clean<-matrix(NA,nrow=length(bands$B.Month),ncol=1)
-clean<-data.frame(clean)
-clean[bands$B.Month<=6,]<-1  #shouldn't we change this to between 4 and 6?
-clean[bands$B.Month>6,]<-2   #shouldn't we change this to between 7 and 9?
+clean.bands<-matrix(NA,nrow=length(bands$B.Month),ncol=1)
+clean.bands<-data.frame(clean.bands)
+clean.bands[bands$B.Month>=4&bands$B.Month<=6,]<-1  
+clean.bands[bands$B.Month>=7&bands$B.Month<=9,]<-2      # 19,589 spring (Apr-Jun), 13,238 summer (Jul-Sep)
 
 #Bring in B.year
-clean[,2]<-bands$B.Year  
+clean.bands[,2]<-bands$B.Year  
 
 #bring in B region
-clean[,3]<-0
-clean[bands$B.Flyway==1,3]<-1
-clean[bands$B.Flyway%in%2:3,3]<-2
-clean[bands$B.Flyway==6&bands$BRegion..STA%in%c("QC","NS","NB","PE","NF","PQ"),3]<-1
-clean[bands$B.Flyway==6&bands$BRegion..STA%in%c("ONT"),3]<-2
+clean.bands[,3]<-0
+clean.bands[bands$B.Flyway==1,4]<-1  ## Eastern region, U.S
+clean.bands[bands$B.Flyway%in%2:3,4]<-2  ## Central region, U.S
+clean.bands[bands$B.Flyway==6&bands$BRegion..STA%in%c("QC","NS","NB","PE","NF","PQ"),4]<-1 ## Add eastern Canada (165)
+clean.bands[bands$B.Flyway==6&bands$BRegion..STA%in%c("ONT","MB"),4]<-2  ## 19 from ONT, added Manitoba to code (no recoveries, but some bandings)
+# 1,663 eastern recoveries, 2,618 central recoveries
 
-# pull out places you don't care about
-bands<-bands[clean$V3!=0,]
-clean<-clean[clean$V3!=0,]
-clean<-clean[,1:3] #remove R.state becuase it is redundant 
+#bring in R region, this is only to exlude region crossers
+clean[,5]<-0 #specify different number from previous step to flag it in the next step
+clean[raw$R.Flyway==1,5]<-1
+clean[raw$R.Flyway%in%2:3,5]<-2
+clean[raw$R.Flyway==6&raw$RRegion..STA%in%c("QC","NS","NB","PE","NF","PQ"),5]<-1
+clean[raw$R.Flyway==6&raw$RRegion..STA%in%c("ONT", "MB"),5]<-2
+
+# removes lines of region crossers
+raw<-raw[clean$V4==clean$V5,]
+clean<-clean[clean$V4==clean$V5,]
+clean<-clean[,1:4] #remove R.state becuase it is redundant 
+# 1,663 to 1595 eastern recoveries, 2,618 to 2604 central recoveries
+
+## TA's independent tally, 68 Eastern pop harvested in Central, 14 Central harvested in Eastern (perfect match!)
 
 #bring in age
 # local = 1, hatch year = 2, adult = 3
-clean[,4]<-NA
-clean[bands$Age..VAGE=="After Hatch Year",4]<-3
-clean[bands$Age..VAGE=="After Second Year",4]<-3
-clean[bands$Age..VAGE=="After Third Year",4]<-3
-clean[bands$Age..VAGE=="Second Year",4]<-3
-clean[bands$Age..VAGE=="Unknown",4]<-NA
-clean[bands$Age..VAGE=="Hatch Year",4]<-2
-clean[bands$Age..VAGE=="Local",4]<-1
+clean[,5]<-NA
+clean[raw$Age..VAGE=="After Hatch Year",5]<-3
+clean[raw$Age..VAGE=="After Second Year",5]<-3
+clean[raw$Age..VAGE=="After Third Year",5]<-3
+clean[raw$Age..VAGE=="Second Year",5]<-3
+clean[raw$Age..VAGE=="Unknown",5]<-NA     ##delete 39 unknown age at banding
+clean[raw$Age..VAGE=="Hatch Year",5]<-2
+clean[raw$Age..VAGE=="Local",5]<-1
 #remove unknowns
-bands<-bands[!is.na(clean[,4]),]
-clean<-clean[!is.na(clean[,4]),]
+raw<-raw[!is.na(clean[,5]),]
+clean<-clean[!is.na(clean[,5]),]      ## 1530 locals, 1504 HY, 1126 adults
 
-# get rid of hatch years in months 5 and 6
-clean <- clean[!(bands$Age..VAGE=="Hatch Year"&bands$B.Month%in%c(5:6)),]
-bands <- bands[!(bands$Age..VAGE=="Hatch Year"&bands$B.Month%in%c(5:6)),]
+# get rid of hatch years in months 4, 5 and 6
+clean <- clean[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(4:6)),]
+raw <- raw[!(raw$Age..VAGE=="Hatch Year"&raw$B.Month%in%c(4:6)),]
 
-#bring in sex and convert to age class
+## there are also 2 locals banded in month 7
+clean <- clean[!(raw$Age..VAGE=="Local"&raw$B.Month%in%c(7:9)),]
+raw <- raw[!(raw$Age..VAGE=="Local"&raw$B.Month%in%c(7:9)),]      ## 1528 locals, 1350 HY, 1126 adults
+
+#bring in sex and convert to age class so this is more like a sex-age class column
 # 1=local, 2=juv, 3=male, 4=female
+clean[,6]<-NA
+clean[clean[,5]%in%1:2,6]<-clean[clean[,5]%in%1:2,5]     
 
+#convert 2 juvenile ages to a single class           ##(SS edit 13 Feb)
+#now: 1=juv (both local and HY), 2=male, 3=female   ##SS edit
+clean[clean[,6]%in%1:2,6]<-1
 
+### Sex from subsequent encounter means unknown at time of banding (== unknown if not recovered)
+### So treat these as unknown and if marked as unknown-sex adult they get deleted (but probably all marked as local or HY)
+clean[raw$Sex..VSEX%in%c("Male")&clean[,5]==3,6]<-2
+clean[raw$Sex..VSEX%in%c("Female")&clean[,5]==3,6]<-3
+# 465 males, 640 females, 2899 unknown
 
-
-#remove unknown adults for now? Can treat unknowns via mixtures acc. to Todd
-
-
-# remove unwanted banding periods (Oct-Dec) for now
+#remove unknown adults for now--only losing 21 individuals if we don't include them
+raw<-raw[!(is.na(clean[,6])&clean[,5]==3),]
+clean<-clean[!(is.na(clean[,6])&clean[,5]==3),]
+# 465 males, 640 females, 2878 unknown
 
 
