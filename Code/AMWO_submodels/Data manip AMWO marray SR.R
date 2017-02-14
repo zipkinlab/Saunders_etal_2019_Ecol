@@ -229,6 +229,8 @@ bands <- bands[bands$Location_lu..STATE_NAME != "",]
 
 #bring in age
 # local = 1, hatch year = 2, adult = 3
+#if an error is happening in this section, it's because the accent on Quebec above (line 223) is turning into a weird character.
+#Make sure it's the correct accent over the e, then re-run if necessary.
 clean.bands[,4]<-NA
 clean.bands[bands$Age..VAGE=="After Hatch Year",4]<-3
 clean.bands[bands$Age..VAGE=="After Second Year",4]<-3
