@@ -334,5 +334,7 @@ for (s in 1:NSeason){
            }}}}}
 
 #Above is the final version of the m-array including column of total individuals never recovered as final column
+#marrayAMWO is 53 by 54 by 2 by 3 by 2 dimensions.
+
 #WILL SAVE AS R OBJECT AFTER VERIFICATION BY TA THAT THIS CODE IS CORRECT
 #save(marrayAMWO, file="marrayAMWO.rda")
