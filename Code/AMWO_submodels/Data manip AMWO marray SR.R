@@ -205,7 +205,8 @@ bands<-subset(bands,B.Month>=4&B.Month<=9)    #34,251 records (6483 excluded)
 ## TA added
 # remove radio transmitters (meta-analyses suggest survival and harvest effects)
 bands<-subset(bands,Add.Info!=89)
-bands<-subset(bands,Add.Info!=81)              #32,827 records (1424 excluded)
+bands<-subset(bands,Add.Info!=80)    #SS and TA added this line to get rid of satellite transmitters (3 birds)
+bands<-subset(bands,Add.Info!=81)              #32,824 records (1427 excluded)
 
 #bring in B.month, convert to season
 clean.bands<-matrix(NA,nrow=length(bands$B.Month),ncol=1)
@@ -272,8 +273,9 @@ bands<-bands[!(is.na(clean.bands[,5])&clean.bands[,4]==3),]
 clean.bands<-clean.bands[!(is.na(clean.bands[,5])&clean.bands[,4]==3),]
 # 30179 inds : 6535 females, 6127 males, 17517 juvs
 
-#adding dummy column to use sum function below for marray
-clean.bands[,6]<-1
+#adding column to use sum function below for marray. Each line of data can include multiple bandings, so need to account
+#for that with Count.of.Birds column from data instead of a dummy column of 1's.
+clean.bands[,6]<-bands$Count.of.Birds
 colnames(clean.bands)<-c("bSeason","bYear","region","age","class","dummy")
 
 #Sorting for the addition to the m-array
