@@ -80,7 +80,7 @@ cat("
     } #s
   
     ## Define multinomial likelihoods for m-arrays
-    for (t in 1:(2*yrs)){        #2*??
+    for (t in 1:yrs){
       for (i in 1:NRegion){
         for (cc in 2:NClass){
           for (s in 1:NSeason){
@@ -93,37 +93,37 @@ cat("
     for (t in 1:yrs){
       for (i in 1:NRegion){
         for (cc in 2:NClass){
-      pr.juv[t-1,t,1,1,i] <- phi[t,1,1,i] * f[t,1,i]
+      pr.juv[t,t,1,1,i] <- phi[t,1,1,i] * f[t,1,i]
       pr.juv[t,t,2,1,i] <- 1 * f[t,1,i]
-      pr.ad[t-1,t,1,cc,i] <- phi[t,1,cc,i] * f[t,cc,i]
+      pr.ad[t,t,1,cc,i] <- phi[t,1,cc,i] * f[t,cc,i]
       pr.ad[t,t,2,cc,i] <- 1 * f[t,cc,i]
 
+    for (k in (t+1):yrs){ #not sure how far up to move this k loop. MTF
     # probability of surviving to start of second hunting season: these are stored values to be used in subsequent diags
-    surv.juv[t-1,t,1,1,i] <- phi[t-1,1,1,i] * phi[t-1,2,1,i] * phi[t,1,2,i]   #note that we are using 2 here in last phi but need to figure out how to do sex mixtures
-    surv.juv[t,t,2,1,i] <- phi[t-1,2,1,i] * phi[t,1,2,i]                      #2 in second phi is placeholder for sex
-    surv.ad[t-1,t,1,cc,i] <- phi[t-1,1,cc,i] * phi[t-1,2,cc,i] * phi[t,1,cc,i]
-    surv.ad[t,t,2,cc,i] <- phi[t-1,2,cc,i] * phi[t,1,cc,i]
+    surv.juv[t,t,1,1,i] <- phi[t,1,1,i] * phi[t,2,1,i] * phi[k,1,2,i]   #note that we are using 2 here in last phi but need to figure out how to do sex mixtures
+    surv.juv[t,t,2,1,i] <- phi[t,2,1,i] * phi[k,1,2,i]                      #2 in second phi is placeholder for sex
+    surv.ad[t,t,1,cc,i] <- phi[t,1,cc,i] * phi[t,2,cc,i] * phi[k,1,cc,i]
+    surv.ad[t,t,2,cc,i] <- phi[t,2,cc,i] * phi[k,1,cc,i]
 
-    # second and subsequent diags
-    for (k in (y+1):yrs){
+    # second and subsequent diags    
     # model prob recovery = prob survives until k, recovered in k
-    pr.juv[t-1,k,1,1,i] <- surv.juv[t-1,k-1,1,1,i] * f[t,2,i]
-    pr.juv[t,k,2,1,i] <- surv.juv[t,k-1,2,1,i] * f[t,2,i]
-    pr.ad[t-1,k,1,cc,i] <- surv.ad[t-1,k-1,1,cc,i] * f[t,cc,i]
-    pr.ad[t,k,2,cc,i] <- surv.ad[t,k-1,2,cc,i] * f[t,cc,i]
+    pr.juv[t,k,1,1,i] <- surv.juv[t,t,1,1,i] * f[k,2,i]
+    pr.juv[t,k,2,1,i] <- surv.juv[t,t,2,1,i] * f[k,2,i]
+    pr.ad[t,k,1,cc,i] <- surv.ad[t,t,1,cc,i] * f[k,cc,i]
+    pr.ad[t,k,2,cc,i] <- surv.ad[t,t,2,cc,i] * f[k,cc,i]
 
     # survival to next hunting season (all adult survival now)
-    surv.juv[t-1,k,1,1,i] <- surv.juv[t-1,k-1,1,1,i] * phi[t-1,2,2,i] * phi[t,1,2,i]
-    surv.juv[t-1,k,2,1,i] <- surv.juv[t,k-1,2,1,i] * phi[t-1,2,2,i] * phi[t,1,2,i]
-    surv.ad[t-1,k,1,cc,i] <- surv.ad[t-1,k-1,1,cc,i] * phi[t-1,2,cc,i] * phi[t,1,cc,i]
-    surv.ad[t-1,k,2,cc,i] <- surv.ad[t,k-1,2,cc,i] * phi[t-1,2,cc,i] * phi[t,1,cc,i]
+    surv.juv[t,k,1,1,i] <- surv.juv[t,t,1,1,i] * phi[t,2,2,i] * phi[k,1,2,i] #check to make sure it is not k and k + 1 MTF
+    surv.juv[t,k,2,1,i] <- surv.juv[t,t,2,1,i] * phi[t,2,2,i] * phi[k,1,2,i]
+    surv.ad[t,k,1,cc,i] <- surv.ad[t,t,1,cc,i] * phi[t,2,cc,i] * phi[k,1,cc,i]
+    surv.ad[t,k,2,cc,i] <- surv.ad[t,t,2,cc,i] * phi[t,2,cc,i] * phi[k,1,cc,i]
     } #k
 
     # Left of main diag
     for (l in 1:(t-1)){
-      pr.juv[t-1,l,1,1,i] <- 0
+      pr.juv[t,l,1,1,i] <- 0
       pr.juv[t,l,2,1,i] <- 0
-      pr.ad[t-1,l,1,cc,i] <- 0
+      pr.ad[t,l,1,cc,i] <- 0
       pr.ad[t,l,2,cc,i] <- 0
     } #l
   } #t
