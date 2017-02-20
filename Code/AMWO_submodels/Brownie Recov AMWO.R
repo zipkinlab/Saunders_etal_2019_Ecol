@@ -1,17 +1,32 @@
-##########################################################################
+##################################################################################################
 # Based off of Todd's ABDU Brownie model
 # 2-season band recovery model for AMWO (summer and fall/winter)
 # Female and Male, Brownie
-# Juvs transition to adults after first winter, no unk adults right?
+# Juvs transition to adults after first winter
 # Juvs not sexed so S rates above first diagnol are mix of S-AdF & S-AdM??
-##########################################################################
+
+# Indexing: 
+#t for current year
+#k for next year
+#s for season [1=summer, 2=winter]
+#cc for class [1=juvenile, 2=adult male, 3=adult female]
+#i for region [1=eastern, 2=central]
+
+##################################################################################################
 
 sink("AMWO.Brownie")
 cat("
     model {
 
     ## Priors and constraints, for mean phi and f, convert to logit scale
-    ## I don't think these are right (Should be dnorm), bc phi[] gets converted to logit scale and not phi.mu, phi.mu can be negative, right?
+
+    #---------------------------------------------------------------------------------------------------
+    # Question:
+
+    ## Shouldn't these priors be specified as dnorm? Or else dunif(0, 1)?
+    #bc phi[] gets converted to logit scale and not phi.mu, phi.mu can be negative, right?
+    
+    #------------------------------------------------------------------------------------------------
     phi.adF.sum.mu ~ dunif(0, 4)        #adult female summer survival
     phi.adF.win.mu ~ dunif(0, 4)        #adult female winter survival
     f.ad.mu ~ dunif(-4, -2)           #adult recovery prob, assuming harvest probability for males & females is =
@@ -21,7 +36,12 @@ cat("
     phi.adM.sum.mu ~ dunif(0, 4)        #adult male phi, summer  
     phi.adM.win.mu ~ dunif(0, 4)        #adult male phi, winter 
 
-    ## Priors for annual SD of survival and reporting rates (not very vague priors?)
+    ## Priors for annual SD of survival and reporting rates
+
+    #------------------------------------------------------------------------------
+    #Question: Are these priors for SD rather informative? Should we start with wider?
+    #-----------------------------------------------------------------------------
+
     phi.adF.sum.sd ~ dunif(0, 1.5)
     phi.juv.sum.sd ~ dunif(0, 1.5)
     phi.juv.win.sd ~ dunif(0, 1.5)       
@@ -65,11 +85,26 @@ cat("
     } #t
     } #i
     } #cc
-    #phi.adF.sum[21] <- 1 # dummy values for easier coding--what are these for???
-    #phi.adM.sum[21] <- 1
 
-    ## Calculate number of birds released each year--by class, season, region??
-    ## Why is class index always skip juveniles (see loops below as well)?
+    #-------------------------------------------------------------------------------------------------
+    #Question: do we want to constrain parameters as above or do we want to do something like:
+    
+    #for (i in 1:Nregion){
+      #for (cc in 1:NClass){
+        #for (s in 1:NSeason){
+          #for (t in 1:yrs){
+    #logit(phi[t,s,cc,i]) <- alpha + beta0[cc] + beta1[i] + beta2[s] + epsilon[t]
+    #}}}}
+
+    #-------------------------------------------------------------------------------------------------
+                          #----------------------------------------------------------------------
+                          # Question:
+
+    #phi.adF.sum[54] <- 1 # dummy values for easier coding--54 is right, right? 53 years + 1 or:
+    #phi.adM.sum[54] <- 1 # could we just loop below (line 90) from 1:(yrs-1) and forget this part?
+                          #-------------------------------------------------------------------
+
+    ## Calculate number of birds released each year--by class, season, region
     for (t in 1:yrs){
       for (i in 1:NRegion){
         for (cc in 2:NClass){
@@ -103,25 +138,28 @@ cat("
       pr.ad[t,t,1,cc,i] <- phi[t,1,cc,i] * f[t,cc,i]
       pr.ad[t,t,2,cc,i] <- 1 * f[t,cc,i]
 
-    for (k in (t+1):yrs){ #not sure how far up to move this k loop. MTF
+    for (k in (t+1):yrs){ 
     # probability of surviving to start of second hunting season: these are stored values to be used in subsequent diags
-    surv.juv[t,t,1,1,i] <- phi[t,1,1,i] * phi[t,2,1,i] * phi[k,1,2,i]   #note that we are using 2 here in last phi but need to figure out how to do sex mixtures
-    surv.juv[t,t,2,1,i] <- phi[t,2,1,i] * phi[k,1,2,i]                      #2 in second phi is placeholder for sex
-    surv.ad[t,t,1,cc,i] <- phi[t,1,cc,i] * phi[t,2,cc,i] * phi[k,1,cc,i]
-    surv.ad[t,t,2,cc,i] <- phi[t,2,cc,i] * phi[k,1,cc,i]
+    
+                                                                               #--------------------------------------------------------------------------------
+                                                                               #Question:  
+    surv.juv[t,t,1,1,i] <- phi[k-1,1,1,i] * phi[k-1,2,1,i] * phi[k,1,2,i]      #note that we are using 2 here in last phi but we're not sure how to do sex mixtures
+    surv.juv[t,t,2,1,i] <- phi[k-1,2,1,i] * phi[k,1,2,i]                       #like TA mentioned. So we will need to replace all 2's with whatever the solution is
+    surv.ad[t,t,1,cc,i] <- phi[k-1,1,cc,i] * phi[k-1,2,cc,i] * phi[k,1,cc,i]   #-----------------------------------------------------------------------------
+    surv.ad[t,t,2,cc,i] <- phi[k-1,2,cc,i] * phi[k,1,cc,i]
 
     # second and subsequent diags    
     # model prob recovery = prob survives until k, recovered in k
-    pr.juv[t,k,1,1,i] <- surv.juv[t,t,1,1,i] * f[k,2,i]
-    pr.juv[t,k,2,1,i] <- surv.juv[t,t,2,1,i] * f[k,2,i]
-    pr.ad[t,k,1,cc,i] <- surv.ad[t,t,1,cc,i] * f[k,cc,i]
-    pr.ad[t,k,2,cc,i] <- surv.ad[t,t,2,cc,i] * f[k,cc,i]
+    pr.juv[t,k,1,1,i] <- surv.juv[t,k-1,1,1,i] * f[k,2,i]     #2 in f is placeholder for sex mixture
+    pr.juv[t,k,2,1,i] <- surv.juv[t,k-1,2,1,i] * f[k,2,i]
+    pr.ad[t,k,1,cc,i] <- surv.ad[t,k-1,1,cc,i] * f[k,cc,i]
+    pr.ad[t,k,2,cc,i] <- surv.ad[t,k-1,2,cc,i] * f[k,cc,i]
 
     # survival to next hunting season (all adult survival now)
-    surv.juv[t,k,1,1,i] <- surv.juv[t,t,1,1,i] * phi[t,2,2,i] * phi[k,1,2,i] #check to make sure it is not k and k + 1 MTF
-    surv.juv[t,k,2,1,i] <- surv.juv[t,t,2,1,i] * phi[t,2,2,i] * phi[k,1,2,i]
-    surv.ad[t,k,1,cc,i] <- surv.ad[t,t,1,cc,i] * phi[t,2,cc,i] * phi[k,1,cc,i]
-    surv.ad[t,k,2,cc,i] <- surv.ad[t,t,2,cc,i] * phi[t,2,cc,i] * phi[k,1,cc,i]
+    surv.juv[t,k,1,1,i] <- surv.juv[t,k-1,1,1,i] * phi[k-1,2,2,i] * phi[k,1,2,i] 
+    surv.juv[t,k,2,1,i] <- surv.juv[t,k-1,2,1,i] * phi[k-1,2,2,i] * phi[k,1,2,i]
+    surv.ad[t,k,1,cc,i] <- surv.ad[t,k-1,1,cc,i] * phi[k-1,2,cc,i] * phi[k,1,cc,i]
+    surv.ad[t,k,2,cc,i] <- surv.ad[t,k-1,2,cc,i] * phi[k-1,2,cc,i] * phi[k,1,cc,i]
     } #k
 
     # Left of main diag
