@@ -10,62 +10,62 @@ sink("AMWO.Brownie")
 cat("
     model {
 
-    ## Priors and constraints, for mean S and f, convert to logit scale
-    s.adF.sum.mu ~ dunif(0, 4)        #adult female summer survival
-    s.adF.win.mu ~ dunif(0, 4)        #adult female winter survival
+    ## Priors and constraints, for mean phi and f, convert to logit scale
+    phi.adF.sum.mu ~ dunif(0, 4)        #adult female summer survival
+    phi.adF.win.mu ~ dunif(0, 4)        #adult female winter survival
     f.ad.mu ~ dunif(-4, -2)           #adult recovery prob
-    s.juv.sum.mu ~ dunif(0, 4)        #juv S, summer
-    s.juv.win.mu ~ dunif(0, 4)        #juv S, winter
+    phi.juv.sum.mu ~ dunif(0, 4)        #juv phi, summer
+    phi.juv.win.mu ~ dunif(0, 4)        #juv phi, winter
     f.juv.mu ~ dunif(-4, -2)          #juv recovery prob
-    s.adM.sum.mu ~ dunif(0, 4)        #adult male S, summer  
-    s.adM.win.mu ~ dunif(0, 4)        #adult male S, winter 
+    phi.adM.sum.mu ~ dunif(0, 4)        #adult male phi, summer  
+    phi.adM.win.mu ~ dunif(0, 4)        #adult male phi, winter 
 
     ## Priors for annual SD of survival and reporting rates
-    s.adF.sum.sd ~ dunif(0, 1.5)
-    s.juv.sum.sd ~ dunif(0, 1.5)
-    s.juv.win.sd ~ dunif(0, 1.5)       
-    s.adF.win.sd ~ dunif(0, 1.5)        
+    phi.adF.sum.sd ~ dunif(0, 1.5)
+    phi.juv.sum.sd ~ dunif(0, 1.5)
+    phi.juv.win.sd ~ dunif(0, 1.5)       
+    phi.adF.win.sd ~ dunif(0, 1.5)        
     f.juv.sd ~ dunif(0, 0.5)  
     f.ad.sd ~ dunif(0, 0.5)       
-    s.adM.sum.sd ~ dunif(0, 1.5)       
-    s.adM.win.sd ~ dunif(0, 1.5)        
+    phi.adM.sum.sd ~ dunif(0, 1.5)       
+    phi.adM.win.sd ~ dunif(0, 1.5)        
 
     # express variances as precision (1/SD^2)
-    s.adF.sum.tau <- pow(s.adF.sum.sd,-2)
-    s.juv.sum.tau <- pow(s.juv.sum.sd,-2)
-    s.juv.win.tau <- pow(s.juv.win.sd,-2)
-    s.adF.win.tau <- pow(s.adF.win.sd,-2)
+    phi.adF.sum.tau <- pow(phi.adF.sum.sd,-2)
+    phi.juv.sum.tau <- pow(phi.juv.sum.sd,-2)
+    phi.juv.win.tau <- pow(phi.juv.win.sd,-2)
+    phi.adF.win.tau <- pow(phi.adF.win.sd,-2)
     f.juv.tau <- pow(f.juv.sd,-2)
     f.ad.tau <- pow(f.ad.sd,-2)
-    s.adM.sum.tau <- pow(s.adM.sum.sd,-2)
-    s.adM.win.tau <- pow(s.adM.win.sd,-2)
+    phi.adM.sum.tau <- pow(phi.adM.sum.sd,-2)
+    phi.adM.win.tau <- pow(phi.adM.win.sd,-2)
 
     ## Generate season parameters for survival
     for (t in 1:yrs){
       for (i in 1:NRegion){
         for (cc in 1:NClass){
-    epsilon.s.juv.sum[t] ~ dnorm(0,s.juv.sum.tau)
-    epsilon.s.juv.win[t] ~ dnorm(0,s.juv.win.tau)
-    epsilon.s.adF.sum[t] ~ dnorm(0,s.adF.sum.tau)
-    epsilon.s.adF.win[t] ~ dnorm(0,s.adF.win.tau)
+    epsilon.phi.juv.sum[t] ~ dnorm(0,phi.juv.sum.tau)
+    epsilon.phi.juv.win[t] ~ dnorm(0,phi.juv.win.tau)
+    epsilon.phi.adF.sum[t] ~ dnorm(0,phi.adF.sum.tau)
+    epsilon.phi.adF.win[t] ~ dnorm(0,phi.adF.win.tau)
     epsilon.f.juv[t] ~ dnorm(0,f.juv.tau)
     epsilon.f.ad[t] ~ dnorm(0,f.ad.tau)
-    epsilon.s.adM.sum[t] ~ dnorm(0,s.adM.sum.tau)
-    epsilon.s.adM.win[t] ~ dnorm(0,s.adM.win.tau)
+    epsilon.phi.adM.sum[t] ~ dnorm(0,phi.adM.sum.tau)
+    epsilon.phi.adM.win[t] ~ dnorm(0,phi.adM.win.tau)
 
-    logit(phi[t,1,1,i]) <- s.juv.sum.mu + epsilon.s.juv.sum[t]
-    logit(phi[t,2,1,i]) <- s.juv.win.mu + epsilon.s.juv.win[t]
-    logit(phi[t,1,3,i]) <- s.adF.sum.mu + epsilon.s.adF.sum[t]
-    logit(phi[t,2,3,i]) <- s.adF.win.mu + epsilon.s.adF.win[t]
+    logit(phi[t,1,1,i]) <- phi.juv.sum.mu + epsilon.phi.juv.sum[t]
+    logit(phi[t,2,1,i]) <- phi.juv.win.mu + epsilon.phi.juv.win[t]
+    logit(phi[t,1,3,i]) <- phi.adF.sum.mu + epsilon.phi.adF.sum[t]
+    logit(phi[t,2,3,i]) <- phi.adF.win.mu + epsilon.phi.adF.win[t]
     logit(f[t,1,i]) <- f.juv.mu + epsilon.f.juv[t]
     logit(f[t,cc,i]) <- f.ad.mu + epsilon.f.ad[t]    #assuming recovery rates for males and females same?
-    logit(phi[t,1,2,i]) <- s.adM.sum.mu + epsilon.s.adM.sum[t]
-    logit(phi[t,2,2,i]) <- s.adM.win.mu + epsilon.s.adM.win[t]
+    logit(phi[t,1,2,i]) <- phi.adM.sum.mu + epsilon.phi.adM.sum[t]
+    logit(phi[t,2,2,i]) <- phi.adM.win.mu + epsilon.phi.adM.win[t]
       } #t
     }  #i
     } #cc
-    #s.adF.sum[21] <- 1 # dummy values for easier coding--what are these for???
-    #s.adM.sum[21] <- 1
+    #phi.adF.sum[21] <- 1 # dummy values for easier coding--what are these for???
+    #phi.adM.sum[21] <- 1
 
     ## Calculate number of birds released each year--by class, season, region??
     for (t in 1:yrs){
