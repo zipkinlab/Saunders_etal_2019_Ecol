@@ -11,16 +11,17 @@ cat("
     model {
 
     ## Priors and constraints, for mean phi and f, convert to logit scale
+    ## I don't think these are right (Should be dnorm), bc phi[] gets converted to logit scale and not phi.mu, phi.mu can be negative, right?
     phi.adF.sum.mu ~ dunif(0, 4)        #adult female summer survival
     phi.adF.win.mu ~ dunif(0, 4)        #adult female winter survival
-    f.ad.mu ~ dunif(-4, -2)           #adult recovery prob
+    f.ad.mu ~ dunif(-4, -2)           #adult recovery prob, assuming harvest probability for males & females is =
     phi.juv.sum.mu ~ dunif(0, 4)        #juv phi, summer
     phi.juv.win.mu ~ dunif(0, 4)        #juv phi, winter
     f.juv.mu ~ dunif(-4, -2)          #juv recovery prob
     phi.adM.sum.mu ~ dunif(0, 4)        #adult male phi, summer  
     phi.adM.win.mu ~ dunif(0, 4)        #adult male phi, winter 
 
-    ## Priors for annual SD of survival and reporting rates
+    ## Priors for annual SD of survival and reporting rates (not very vague priors?)
     phi.adF.sum.sd ~ dunif(0, 1.5)
     phi.juv.sum.sd ~ dunif(0, 1.5)
     phi.juv.win.sd ~ dunif(0, 1.5)       
@@ -61,32 +62,36 @@ cat("
     logit(f[t,cc,i]) <- f.ad.mu + epsilon.f.ad[t]    #assuming recovery rates for males and females same?
     logit(phi[t,1,2,i]) <- phi.adM.sum.mu + epsilon.phi.adM.sum[t]
     logit(phi[t,2,2,i]) <- phi.adM.win.mu + epsilon.phi.adM.win[t]
-      } #t
-    }  #i
+    } #t
+    } #i
     } #cc
     #phi.adF.sum[21] <- 1 # dummy values for easier coding--what are these for???
     #phi.adM.sum[21] <- 1
 
     ## Calculate number of birds released each year--by class, season, region??
+    ## Why is class index always skip juveniles (see loops below as well)?
     for (t in 1:yrs){
       for (i in 1:NRegion){
         for (cc in 2:NClass){
           for (s in 1:NSeason){
       rel.juv[t,s,1,i] <- sum(marrayAMWO[t,,s,1,i])                              
-      rel.ad[t,s,cc,i]  <-sum(marrayAMWO[t,,s,cc,i])
+      rel.ad[t,s,cc,i] <- sum(marrayAMWO[t,,s,cc,i])
     } #t
     } #i
     } #cc
     } #s
   
-    ## Define multinomial likelihoods for m-arrays
+    ## Define multinomial likelihoods for m-arrays -- why don't we merge this loop with the above loop for quicker computing?
     for (t in 1:yrs){
       for (i in 1:NRegion){
         for (cc in 2:NClass){
           for (s in 1:NSeason){
             marrayAMWO[t,1:(yrs+1),s,1,i] ~ dmulti(pr.juv[t,,s,1,i], rel.juv[t,s,1,i])      
             marrayAMWO[t,1:(yrs+1),s,cc,i] ~ dmulti(pr.ad[t,,s,cc,i], rel.ad[t,s,cc,i])
-    }}}}
+    } #t
+    } #i
+    } #cc
+    } #s
 
     ## Define cell probabilities of m-arrays
     # Main diagonal--recovery in season [t]
