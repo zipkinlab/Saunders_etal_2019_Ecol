@@ -221,12 +221,9 @@ clean.bands[,2]<-bands$B.Year
 clean.bands[,3]<-0
 clean.bands[bands$B.Flyway==1,3]<-1  ## Eastern region, U.S
 clean.bands[bands$B.Flyway%in%2:3,3]<-2  ## Central region, U.S
-clean.bands[bands$B.Flyway==6&bands$Location_lu..STATE_NAME %in%c("Québec","Nova Scotia","New Brunswick"),3]<-1 ## Add eastern Canada (165)
-clean.bands[bands$B.Flyway==6&bands$Location_lu..STATE_NAME %in%c("Ontario","Manitoba"),3]<-2  ## 19 from ONT, added Manitoba to code (no recoveries, but some bandings)
-#There is one individual that has no associated State in this Flyway, need to delete. It's from Canada (Newfoundland/Labrador) and is the only one.
-clean.bands <-clean.bands[clean.bands$V3 != 0,] 
-bands <- bands[bands$Location_lu..STATE_NAME != "",] 
-# 13053 in Eastern, 19773 in Central = 32,826
+clean.bands[bands$B.Flyway==6&bands$Region..State %in%c("Quebec","Nova Scotia","New Brunswick","Newfoundland and Labrador and St. Pierre et Miquelon"),3]<-1 ## Add eastern Canada (165)
+clean.bands[bands$B.Flyway==6&bands$Region..State %in%c("Ontario","Manitoba"),3]<-2  ## 19 from ONT, added Manitoba to code (no recoveries, but some bandings)
+# 13054 in Eastern, 19770 in Central = 32,824
 
 #bring in age
 # local = 1, hatch year = 2, adult = 3
@@ -243,7 +240,7 @@ clean.bands[bands$Age..VAGE=="Local",4]<-1
 #remove unknowns
 bands<-bands[!is.na(clean.bands[,4]),]
 clean.bands<-clean.bands[!is.na(clean.bands[,4]),]      
-#32,142 individuals 
+#32,139 individuals 
 
 # get rid of hatch years in months 4, 5 and 6
 clean.bands <- clean.bands[!(bands$Age..VAGE=="Hatch Year"&bands$B.Month%in%c(4:6)),]
@@ -252,7 +249,7 @@ bands <- bands[!(bands$Age..VAGE=="Hatch Year"&bands$B.Month%in%c(4:6)),]
 ## there are also 2 locals banded in month 7
 clean.bands <- clean.bands[!(bands$Age..VAGE=="Local"&bands$B.Month%in%c(7:9)),]
 bands <- bands[!(bands$Age..VAGE=="Local"&bands$B.Month%in%c(7:9)),]      
-#Now 30,849 inds 
+#Now 30,846 inds 
 
 #bring in sex and convert to age class so this is more like a sex-age class column
 # 1=local, 2=juv, 3=male, 4=female
@@ -271,7 +268,7 @@ clean.bands[bands$Sex..VSEX%in%c("Female")&clean.bands[,4]==3,5]<-3
 #remove unknown adults for now--only losing 21 individuals if we don't include them
 bands<-bands[!(is.na(clean.bands[,5])&clean.bands[,4]==3),]
 clean.bands<-clean.bands[!(is.na(clean.bands[,5])&clean.bands[,4]==3),]
-# 30179 inds : 6535 females, 6127 males, 17517 juvs
+# 30176 inds : 6533 females, 6127 males, 17516 juvs
 
 #adding column to use sum function below for marray. Each line of data can include multiple bandings, so need to account
 #for that with Count.of.Birds column from data instead of a dummy column of 1's.
@@ -324,6 +321,10 @@ marrayAMWO<-array(NA,dim=c(NYear,NYear+1,NSeason,NClass,NRegion),
            dimnames =list(Year, c(Year,"NR"), c("spring","not_spring"),
                           c("Juvenile","Adult_Male","Adult_Female"),
                           c("Eastern","Central")))
+relAMWO<-array(NA,dim=c(NYear,NSeason,NClass,NRegion),
+               dimnames =list(Year, c("spring","not_spring"),
+                              c("Juvenile","Adult_Male","Adult_Female"),
+                              c("Eastern","Central")))
 
 for (s in 1:NSeason){
   for (cc in 1:NClass){
@@ -335,9 +336,15 @@ for (s in 1:NSeason){
           }else{
             marrayAMWO[b,r,s,cc,i] <- awc.nonrecov[b,,s,cc,i]
           }
+          relAMWO[b,s,cc,i] <- sum(marrayAMWO[b,,s,cc,i])
            }}}}}
 
 #Above is the final version of the m-array including column of total individuals never recovered as final column
 #marrayAMWO is 53 by 54 by 2 by 3 by 2 dimensions.
 
 save(marrayAMWO, file="marrayAMWO.rda")
+save(relAMWO, file="relAMWO.rda")
+dim(marrayAMWO)[]
+dim(relAMWO)[]
+marrayAMWO[,54,1,1,1]
+relAMWO[,1,1,1]
