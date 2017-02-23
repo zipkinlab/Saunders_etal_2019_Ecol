@@ -48,7 +48,7 @@ cat("
     eps.f[t,c,p] ~ dnorm(0,f.tau[c,p])
     
     logit(sa[t,c,p]) <- sa.mu[c,p] + eps.sa[t,c,p]         # annual survival (by year, cohort, pop)
-    logit(ss[t,c,p]) <- ss.mu[c,p] + eps.ss[t,c,p]         # seasonal survival
+    logit(ss[t,c,p]) <- ss.mu[c,p] + eps.ss[t,c,p]         # seasonal survival (summer)
     logit(f[t,c,p]) <- f.mu[c,p] + eps.f[t,c,p]            # Brownie recovery rate
     
     # Note: in jags (but not in WinBUGS), releases MUST be provided as data; we have saved as relAMWO
