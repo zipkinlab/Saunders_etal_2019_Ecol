@@ -25,7 +25,7 @@ cat("
     # Todd's note: Brownie models measure true survival: we can call it s, not phi!
     
     for (p in 1:2){
-    pi[p] ~ dunif(0.3,0.7)            # **proportion of banded juveniles that are male (should be close to 0.5)--set to 0.5 prob
+    pi[p] <- 0.5                      # **proportion of banded juveniles that are male--set to 0.5
     for (c in 1:3){                   # following your format here, but my inclination is to recognize g =1:6 groups
     sa.x[c,p] ~ dunif(0,1) 
     sa.mu[c,p] <- logit(sa.x[c,p])    # neat trick to create uniform(0,1) prior on logit scale
@@ -61,7 +61,7 @@ cat("
     pr[t,t,2,c,p] <- f[t,c,p]                              # survival assumed 1 if banded Jul-Sep
     
     # monitor cumulative survival to start of next hunting season (previously surv; used in subsequent diagonals)
-    cumS[t,t,1,c,p] <- ss[t,c,p] * sa[t,c,p]              # SS: is the indexing right for ss and sa?
+    cumS[t,t,1,c,p] <- ss[t,c,p] * sa[t,c,p]
     cumS[t,t,2,c,p] <- sa[t,c,p]
     }} # t,c
     
@@ -70,8 +70,8 @@ cat("
     # All birds are adults now, no differences between Apr-Jun and Jul-Sep either
     for (k in (t+1):yrs){                                                                 # SS: k loop to represent next year (above main diagonal)
     # recoveries
-    pr[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi[p]*f[k,2,p] + (1-pi[p])*f[k,3,p])            # TA: treat juvs as AdM for now
-    pr[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi[p]*f[k,2,p] + (1-pi[p])*f[k,3,p])            # SS: aren't lines 73-4 as mixture?
+    pr[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi[p]*f[k,2,p] + (1-pi[p])*f[k,3,p])            # juvs as mixture of AdM & AdF
+    pr[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi[p]*f[k,2,p] + (1-pi[p])*f[k,3,p])          
     pr[t,k,1,2,p] <- cumS[t,k-1,1,2,p] * f[k,2,p] 
     pr[t,k,2,2,p] <- cumS[t,k-1,2,2,p] * f[k,2,p] 
     pr[t,k,1,3,p] <- cumS[t,k-1,1,3,p] * f[k,3,p] 
@@ -111,30 +111,73 @@ sink()
 # Bundle data
 bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO)
 
-# Initial values (dimensions don't match 2 x 3 structure, so I'm using inits=NULL)       # SS: shouldn't be 3 x 2 structure?
-#inits <- function(){list(sa.x=c(rep(runif(1,0,1),6)), sa.sd=c(rep(runif(1,0.05,2),6)),
-#                        ss.x=c(rep(runif(1,0,1),6)), ss.sd=c(rep(runif(1,0.05,2),6)),
-#                        f.x=c(rep(runif(1,0,1),6)), f.sd=c(rep(runif(1,0.05,2),6)))}  
+# Initial values (dimensions don't match 2 x 3 structure, so I'm using inits=NULL)       # SS: shouldn't be 3 x 2 structure? Made below, though
+sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 # may not be necessary.
+fill <- runif(1,0,1)
+for (p in 1:2){
+  for (c in 1:3){
+    sa.x.inits[c,p] <- fill
+  }}
+
+ss.x.inits <- matrix(NA, nrow=3, ncol=2)
+fill <- runif(1,0,1)
+for (p in 1:2){
+  for (c in 1:3){
+    ss.x.inits[c,p] <- fill
+  }}
+
+f.x.inits <- matrix(NA, nrow=3, ncol=2)
+fill <- runif(1,0,1)
+for (p in 1:2){
+  for (c in 1:3){
+    f.x.inits[c,p] <- fill
+  }}
+
+sa.sd.inits <- matrix(NA, nrow=3, ncol=2)
+fill <- runif(1,0.05,2)
+for (p in 1:2){
+  for (c in 1:3){
+    sa.sd.inits[c,p] <- fill
+  }}
+
+ss.sd.inits <- matrix(NA, nrow=3, ncol=2)
+fill <- runif(1,0.05,2)
+for (p in 1:2){
+  for (c in 1:3){
+    ss.sd.inits[c,p] <- fill
+  }}
+
+f.sd.inits <- matrix(NA, nrow=3, ncol=2)
+fill <- runif(1,0.05,2)
+for (p in 1:2){
+  for (c in 1:3){
+    f.sd.inits[c,p] <- fill
+  }}
+
+inits <- function(){list(sa.x=sa.x.inits, sa.sd=sa.sd.inits,
+                         ss.x=ss.x.inits, ss.sd=ss.sd.inits,
+                         f.x=f.x.inits, f.sd=f.sd.inits)}  
 
 # Parameters monitored
-parameters <- c("pi","sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f")        # no need to monitor pi if set to 0.5
+parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f")        # no need to monitor pi if set to 0.5
 
 # MCMC settings (everything converges)
-ni <- 6000
-nt <- 1
-nb <- 1000
+ni <- 8000
+nt <- 2
+nb <- 2000
 nc <- 3
 
-AMWO.Brownie2.jags <- jagsUI(bugs.data, inits=NULL, parameters, "AMWO.Brownie2", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE)
+AMWO.Brownie2.jags <- jagsUI(bugs.data, inits=inits, parameters, "AMWO.Brownie2", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE) #changed from inits=NULL
 print(AMWO.Brownie2.jags,digits=2)
+save(AMWO.Brownie2.jags, file="AMWO Brownie.rda")
 
-hist(AMWO.Brownie2.jags$sims.list$pi[,1])
-hist(AMWO.Brownie2.jags$sims.list$pi[,2])
+#hist(AMWO.Brownie2.jags$sims.list$pi[,1])
+#hist(AMWO.Brownie2.jags$sims.list$pi[,2])
 
-mean(AMWO.Brownie2.jags$mean$sa[,1,1]) #mean juv S eastern: 0.264 (with estimating pi)
-mean(AMWO.Brownie2.jags$mean$sa[,2,1]) #mean adM S eastern: 0.353 (with estimating pi)
-mean(AMWO.Brownie2.jags$mean$sa[,3,1]) #mean adF S eastern: 0.476 (with estimating pi)
+mean(AMWO.Brownie2.jags$mean$sa[,1,1]) #mean juv S eastern: 0.262 [0.21-0.31]
+mean(AMWO.Brownie2.jags$mean$sa[,2,1]) #mean adM S eastern: 0.346 [0.24-0.41]
+mean(AMWO.Brownie2.jags$mean$sa[,3,1]) #mean adF S eastern: 0.476 [0.39-0.56]
 
-mean(AMWO.Brownie2.jags$mean$sa[,1,2]) #mean juv S central: 0.259 (with estimating pi)
-mean(AMWO.Brownie2.jags$mean$sa[,2,2]) #mean adM S central: 0.447 (with estimating pi)
-mean(AMWO.Brownie2.jags$mean$sa[,3,2]) #mean adF S central: 0.476 (with estimating pi)
+mean(AMWO.Brownie2.jags$mean$sa[,1,2]) #mean juv S central: 0.248 [0.21-0.30]
+mean(AMWO.Brownie2.jags$mean$sa[,2,2]) #mean adM S central: 0.444 [0.39-0.49]
+mean(AMWO.Brownie2.jags$mean$sa[,3,2]) #mean adF S central: 0.479 [0.43-0.53]
