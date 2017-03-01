@@ -54,11 +54,8 @@ sink("Lincoln.jags")
 cat("
     model {
   
-    # Initial pop sizes??
-    af.N[1,1] ~ dnorm(720000,1E-10) #assuming these come from previous Lincoln analysis; adult female central (1)
-    af.N[2,1] ~ dnorm(600000,1E-10)  #adult female eastern (2)
-    am.N[1,1] ~ dnorm(615000,1E-10)   #adult male central
-    am.N[2,1] ~ dnorm(530000,1E-10)   #adult male eastern
+    # Initial pop sizes??-- SS: need to adjust/figure these out
+    N[1,c,p] ~ dnorm(??, ??)    # worry about this later?
 
     # Priors and constraints for population means and variances
     for (p in 1:2){                       # 1 Eastern, 2 Central
@@ -178,7 +175,7 @@ bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO)
 
 # Initial values (dimensions don't match 2 x 3 structure, so I'm using inits=NULL)       # SS: shouldn't be 3 x 2 structure? Made below, though
 sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 # may not be necessary.
-fill <- runif(1,0,1)
+fill <- runif(1,0,1)                                     # I know these are clunky, but just threw them in to make it work
 for (p in 1:2){
   for (c in 1:3){
     sa.x.inits[c,p] <- fill
@@ -226,7 +223,7 @@ inits <- function(){list(sa.x=sa.x.inits, sa.sd=sa.sd.inits,
 # Parameters monitored
 parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f")        # no need to monitor pi if set to 0.5
 
-# MCMC settings (everything converges)
+# MCMC settings
 ni <- 8000
 nt <- 2
 nb <- 2000
