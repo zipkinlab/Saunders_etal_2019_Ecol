@@ -1,3 +1,7 @@
+########################################################################
+# Combined Lincoln estimation-Brownie recovery model for AmWO
+########################################################################
+
 #-----------------------------------------------------------------------------------------------
 # Indexing: 
 #t for cohort year
@@ -7,9 +11,18 @@
 #p for population [1=eastern, 2=central]
 #------------------------------------------------------------------------------------------------
 
+#-----------------------------------------------------------------------------------------------
+# Things we still have to do:
+# 1. Get wing and harvest data read in and manipulated into correct format to use
+# 2. Figure out if we can use pi.age to inform fecundity?
+# 3. Figure out initial pop sizes to use
+# 4. Figure out what we want reporting rate (p) to be a product of: vector of length yrs inc.
+# proportion of 1800 bands and band type effect?
+#-----------------------------------------------------------------------------------------------
+
 # Make sure AMWO marray and AMWO rel are loaded into workspace
 
-# LOAD HARVEST DATA #
+# Load WING data #
 harvest <- read.csv("AMWO harvest.csv",header=TRUE)
 
 # read data into proper matrix for jags: needs to be in t,c,p format, right?
@@ -40,49 +53,51 @@ Region<-unique(clean$Pop)
 Region<-sort(Region)       #SS sorted
 NRegion<-length(Region)
 
-Harvest<-array(NA,dim=c(NYear,NClass,NRegion),
+wings <-array(NA,dim=c(NYear,NClass,NRegion),
            dimnames =list(Years,c("Juvenile","Adult_Male","Adult_Female"),
                           c("Eastern","Central")))
 # to be continued...
 
+# Load HARVEST data (H)
+
+# to be continued...
 
 #------------#
 #-BUGS Model-#
 #------------#
 
-sink("Lincoln.jags")
+sink("Lincoln.Brownie.jags")
 cat("
     model {
   
-    ### TA: if these are too far off, or the jump to N2 is too improbable, the model won't update
-    ### you will need this for AdM, AdF, and locals in each population (6 total)
-    ### estimate pop size in spring, summer, or both? If both, need to index season with N
-
     # Priors and constraints for population means and variances
-    for (p in 1:2){                       # 1 Eastern, 2 Central
-    for (c in 1:3){                       # following your format here, but my inclination is to recognize g =1:6 groups
+    for (p in 1:2){                            # 1 Eastern, 2 Central
+    for (c in 1:3){                       
     sa.x[c,p] ~ dunif(0,1) 
-    sa.mu[c,p] <- logit(sa.x[c,p])        # neat trick to create uniform(0,1) prior on logit scale
+    sa.mu[c,p] <- logit(sa.x[c,p])        
     ss.x[c,p] ~ dunif(0,1) 
     ss.mu[c,p] <- logit(ss.x[c,p])
     f.x[c,p] ~ dunif(0,1) 
-    f.mu[c,p] <- logit(f.x[c,p])         # note: may need a prior for pi.sex (see below for where pi.sex created)
+    f.mu[c,p] <- logit(f.x[c,p])               # note: may need a prior for pi.sex (see below for where pi.sex created)
 
-    sa.sd[c,p] ~ dunif(0.05,2)            # Priors for SDs of survival and recovery rates
+    sa.sd[c,p] ~ dunif(0.05,2)                 # Priors for SDs of survival and recovery rates
     ss.sd[c,p] ~ dunif(0.05,2) 
     f.sd[c,p] ~ dunif(0.05,2) 
-    sa.tau[c,p] <- pow(sa.sd[c,p],-2)     # Express as precision
+    sa.tau[c,p] <- pow(sa.sd[c,p],-2)          # Express as precision
     ss.tau[c,p] <- pow(ss.sd[c,p],-2) 
     f.tau[c,p] <- pow(f.sd[c,p],-2) 
 
     # priors for fecundities
-    F.x[p] ~ dunif(0, 4)                       # logical bounds on fecundity (F) with 4 egg clutch; need c index?? 
+    F.x[p] ~ dunif(0, 4)                       # logical bounds on fecundity (F) with 4 egg clutch 
     F.sd[p] ~ dunif(0.01, 1) 
     F.tau[p] <- pow(F.sd[p], -2)
 
-    # prior for initial pop sizes
-    N[1,1,c,p] ~ dnorm(??, ??)                  # informed prior based on Lincoln estimates; spring
-                                                # NOTE: will likely have to loop only through p with separate N's for each c
+    ### TA: if these are too far off, or the jump to N2 is too improbable, the model won't update
+    ### you will need this for AdM, AdF, and locals in each population (6 total)
+
+    # prior for initial pop sizes in spring              # informed prior based on Lincoln estimates?
+    N[1,1,c,p] ~ dnorm(??, ??)                           # NOTE: will likely have to loop only through p with separate N's for each c
+                                                
     ## Generate annual parameter estimates
     for (t in 1:yrs){
     eps.sa[t,c,p] ~ dnorm(0,sa.tau[c,p])
@@ -98,8 +113,7 @@ cat("
     } # close t
 
     ## Balance equations, assuming estimating N in both seasons
-    # Initial pop sizes: t, s, c, p
-
+    # Initial pop sizes in summer [t, s, c, p]
     N[1,2,c,p] <- N[1,1,c,p]*ss[1,c,p]         # pop size in late summer is function of summer survival 
     } #c
 
@@ -109,13 +123,12 @@ cat("
     sw[t,1,p] <- (sa[t-1,1,p]/ss[t,1,p])       # derived winter survival for juveniles
 
     for (c in 2:3){
-    sw[t,c,p] <- sa[t-1,c,p]/ss[t,c,p]         # derived winter survival for adults
+    sw[t,c,p] <- sa[t-1,c,p]/ss[t,c,p]                                                # derived winter survival for adults
     N[t,1,c,p] <- N[t-1,2,c,p]*sw[t,c,p] + pi.sex[t,c-1,p]*N[t-1,2,1,p]*sw[t,1,p]     # pop size of adults in spring
     N[t,2,c,p] <- N[t,1,c,p]*ss[t,c,p]                                                # pop size of adults in late summer 
     } #c
     } #t 
 
-    #Note: will want to calculate a derived harvest rate (h) as f/p to use for modeling harvest data
     # Observation process, recoveries and harvest data
     # Recoveries
     # Note: releases MUST be provided as data; we have saved as relAMWO
@@ -136,16 +149,16 @@ cat("
     for (t in 1:yrs){
     # Above main diagonal--indirect recovery in season [k > t]
     # All birds are adults now, no differences between Apr-Jun and Jul-Sep either
-    for (k in (t+1):yrs){                                                                 # SS: k loop to represent next year (above main diagonal)
+    for (k in (t+1):yrs){                                                                       # k loop to represent next year (above main diagonal)
     # recoveries
-    pr[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*f[k,2,p] + (pi.sex[t,2,p]*f[k,3,p])            # juvs as mixture of AdM & AdF
-    pr[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*f[k,2,p] + (pi.sex[t,2,p])*f[k,3,p])          
+    pr[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*f[k,2,p] + (pi.sex[t,2,p]*f[k,3,p])     # juvs as mixture of AdM & AdF
+    pr[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*f[k,2,p] + (pi.sex[t,2,p])*f[k,3,p])    # pi.sex[,1,] is proportion male; pi.sex[,2,] is proportion female. See below       
     pr[t,k,1,2,p] <- cumS[t,k-1,1,2,p] * f[k,2,p] 
     pr[t,k,2,2,p] <- cumS[t,k-1,2,2,p] * f[k,2,p] 
     pr[t,k,1,3,p] <- cumS[t,k-1,1,3,p] * f[k,3,p] 
     pr[t,k,2,3,p] <- cumS[t,k-1,2,3,p] * f[k,3,p] 
     # monitor cumulative survival to start of next hunting period
-    cumS[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + (pi.sex[t,2,p]*sa[k,3,p])        # juvs as mixture AdM & AdF
+    cumS[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + (pi.sex[t,2,p]*sa[k,3,p]) # juvs as mixture AdM & AdF
     cumS[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + (pi.sex[t,2,p]*sa[k,3,p]) 
     cumS[t,k,1,2,p] <- cumS[t,k-1,1,2,p] * sa[k,2,p]
     cumS[t,k,2,2,p] <- cumS[t,k-1,2,2,p] * sa[k,2,p]
@@ -174,33 +187,32 @@ cat("
 
     # Summarize known wing samples by age and sex
     for (t in 1:yrs){
-    wings.age[t,,p] ~ dmulti(pi.age[t,,p],wings[t,p])           
-    wings.sex[t,,p] ~ dmulti(pi.sex[t,,p],wings[t,p])           
+    wings.age[t,,p] ~ dmulti(pi.age[t,,p], wings[t,p])           
+    wings.sex[t,,p] ~ dmulti(pi.sex[t,,p], wings[t,p])           
 
     # Bring in total harvest data
-    pi.age[t,1,p] <- H.total[t,p]/H[t,1,p]                      # pi is on the left-hand side because we need to use H on the left-hand side below
+    pi.age[t,1,p] <- H.total[t,p]/H[t,1,p]                      # pi is on the left-hand side (instead of H) because we need to use H on the left-hand side below
     pi.age[t,2,p] <- (pi.sex[t,1,p] * H.total[t,p])/H[t,2,p]    # can we use pi.age to inform fecundity??
     pi.age[t,3,p] <- (pi.sex[t,2,p] * H.total[t,p])/H[t,3,p]
 
     # Harvest estimates by age-sex class are function of harvest rate and total pop size
     for (c in 1:3){
-    H[t,c,p] ~ dbinom(h[t,c,p], N[t,2,c,p])           # harvest rate is recovery rate divided by reporting rate (p)
-    h[t,c,p] <- f[t,c,p]/p[t]                         # note that p is going to be a function of 1800 band proportions                                                      
-    } #c
-    } #t
+    H[t,c,p] ~ dbinom(h[t,c,p], N[t,2,c,p])           
+    h[t,c,p] <- f[t,c,p]/p[t]                         # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
+    } #c                                              # note that p is likely going to be multipled by vector of proportions of 1800 bands used each year
+    } #t           
     } #p
     } # end bugs model
     ",fill = TRUE)
 sink()
 
 # Bundle data
-bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO)
+bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO)  # add wings.age, wings.sex, H
 
 ### inits not needed if they are mirror image of priors
-### but "moderately informed inits" can become essential to get models running, so good to have
-# Initial values (dimensions don't match 2 x 3 structure, so I'm using inits=NULL)       # SS: shouldn't be 3 x 2 structure? Made below, though
-sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 # may not be necessary.
-fill <- runif(1,0,1)                                     # I know these are clunky, but just threw them in to make it work
+### but "moderately informed inits" can become essential to get models running, so good to have    
+sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 
+fill <- runif(1,0,1)                                     
 for (p in 1:2){
   for (c in 1:3){
     sa.x.inits[c,p] <- fill
@@ -246,7 +258,7 @@ inits <- function(){list(sa.x=sa.x.inits, sa.sd=sa.sd.inits,
                          f.x=f.x.inits, f.sd=f.sd.inits)}  
 
 # Parameters monitored
-parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f")        # no need to monitor pi if set to 0.5
+parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f", "pi.sex", "pi.age")    # add to this before running!
 
 # MCMC settings
 ni <- 8000
