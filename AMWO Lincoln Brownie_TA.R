@@ -13,19 +13,20 @@
 
 #-----------------------------------------------------------------------------------------------
 # Things we still have to do:
-# 1. Get wing and harvest data read in and manipulated into correct format to use
+# 1. Get wing and harvest data read in and manipulated into correct format to use--SS did, double-check
 # 2. Figure out if we can use pi.age to inform fecundity?
 # 3. Figure out initial pop sizes to use
 # 4. Figure out what we want reporting rate (p) to be a product of: vector of length yrs inc.
 # proportion of 1800 bands and band type effect?
+# 5. Need missing harvest/wing data for 1997, 1998, 2014 and 2015
 #-----------------------------------------------------------------------------------------------
 
 # Make sure AMWO marray and AMWO rel are loaded into workspace
 
-# Load WING data #
+# Load WING and HARVEST data #
 harvest <- read.csv("AMWO harvest.csv",header=TRUE)
+#NOTE: these data are missing 1997, 1998, 2014 and 2015!!
 
-# read data into proper matrix for jags: needs to be in t,c,p format, right?
 #bring in year
 clean<-matrix(NA,nrow=98,ncol=1)
 clean<-data.frame(clean)
@@ -42,25 +43,51 @@ clean[,6]<-harvest$IF
 clean[,7]<-harvest$IM
 clean[,8]<-harvest$IU
 
-colnames(clean)<-c("Year","Pop","AdF","AdM","AdU","JuvF","JuvM","JuvU")
+#this is the sum of all age-sex wing classes. 
+clean[,9] <- rowSums(clean[,3:8])     # NOTE: Adjust if don't want all unknown groups
 
-#convert clean to t,c,p matrix called Harvest to put in Lincoln estimation below
+colnames(clean)<-c("Year","Pop","AdF","AdM","AdU","JuvF","JuvM","JuvU","Total")
 
-Years<-unique(clean$Year)
-Years<-sort(Years)          #SS sorted
-NYear<-length(Years)
-Region<-unique(clean$Pop)
-Region<-sort(Region)       #SS sorted
-NRegion<-length(Region)
+wings<-matrix(NA,nrow=49,ncol=2)
+wings[,1] <- clean$Total[clean$Pop=="E"]   # column 1 is eastern (matches p indexing below)
+wings[,2] <-clean$Total[clean$Pop=="C"]    # column 2 is central
 
-wings <-array(NA,dim=c(NYear,NClass,NRegion),
-           dimnames =list(Years,c("Juvenile","Adult_Male","Adult_Female"),
-                          c("Eastern","Central")))
-# to be continued...
+dim(wings)
 
-# Load HARVEST data (H)
+# Now need to make wings.age and wings.sex datasets
+clean[,10] <- rowSums(clean[,3:5])   # adult wings column; adjust categories included if needed
+clean[,11] <- rowSums(clean[,6:8])   # juvenile wings column; adjust categories included if needed
 
-# to be continued...
+colnames(clean)<-c("Year","Pop","AdF","AdM","AdU","JuvF","JuvM","JuvU","Total", "Adults", "Juvs")
+
+wings.age<-array(NA, dim=c(49,2,2))              # dims: t, ages (1=juv; 2=adult), p (1=eastern; 2=central)
+wings.age[,1,1]<-clean$Juvs[clean$Pop=="E"]      #juvenile eastern
+wings.age[,2,1]<-clean$Adults[clean$Pop=="E"]    #adult eastern
+wings.age[,1,2]<-clean$Juvs[clean$Pop=="C"]      #juvenile central
+wings.age[,2,2]<-clean$Adults[clean$Pop=="C"]    # adult central
+
+dim(wings.age)    #49 by 2 by 2 (need to add more years)
+
+# wings.sex dataset (adults only)
+wings.sex<-array(NA, dim=c(49,2,2))              # dims: t, sex (1=male; 2=female), p (1=eastern; 2=central)
+wings.sex[,1,1]<-clean$AdM[clean$Pop=="E"]      # male eastern
+wings.sex[,2,1]<-clean$AdF[clean$Pop=="E"]    # female eastern
+wings.sex[,1,2]<-clean$AdM[clean$Pop=="C"]      # male central
+wings.sex[,2,2]<-clean$AdF[clean$Pop=="C"]    # female central
+
+dim(wings.sex)  #49 by 2 by 2 (need to add more years)
+
+# Bring in total harvest data
+
+#add total harvest column to clean
+clean[,12] <- harvest$Harvest
+colnames(clean)<-c("Year","Pop","AdF","AdM","AdU","JuvF","JuvM","JuvU","Total","Adults","Juvs","Harvest")
+
+H.total<-matrix(NA, nrow=49, ncol=2)          #dims: t by p (1=eastern; 2=central)
+H.total[,1]<-clean$Harvest[clean$Pop=="E"]    # harvest in eastern pop
+H.total[,2]<-clean$Harvest[clean$Pop=="C"]    # harvest in central pop
+
+dim(H.total)      #49 by 2
 
 #------------#
 #-BUGS Model-#
@@ -191,9 +218,9 @@ cat("
     wings.sex[t,,p] ~ dmulti(pi.sex[t,,p], wings[t,p])           
 
     # Bring in total harvest data
-    pi.age[t,1,p] <- H.total[t,p]/H[t,1,p]                      # pi is on the left-hand side (instead of H) because we need to use H on the left-hand side below
-    pi.age[t,2,p] <- (pi.sex[t,1,p] * H.total[t,p])/H[t,2,p]    # can we use pi.age to inform fecundity??
-    pi.age[t,3,p] <- (pi.sex[t,2,p] * H.total[t,p])/H[t,3,p]
+    pi.age[t,1,p] <- H[t,1,p]/H.total[t,p]                      # pi is on the left-hand side (instead of H) because we need to use H on the left-hand side below
+    pi.sex[t,1,p] <- H[t,2,p]/(pi.age[t,2,p] * H.total[t,p])    # can we use pi.age to inform fecundity??
+    pi.sex[t,2,p] <- H[t,3,p]/(pi.age[t,2,p] * H.total[t,p])    
 
     # Harvest estimates by age-sex class are function of harvest rate and total pop size
     for (c in 1:3){
@@ -207,7 +234,7 @@ cat("
 sink()
 
 # Bundle data
-bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO)  # add wings.age, wings.sex, H
+bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wings.age=wings.age, wings.sex=wings.sex, H.total=H.total)  
 
 ### inits not needed if they are mirror image of priors
 ### but "moderately informed inits" can become essential to get models running, so good to have    
@@ -258,7 +285,7 @@ inits <- function(){list(sa.x=sa.x.inits, sa.sd=sa.sd.inits,
                          f.x=f.x.inits, f.sd=f.sd.inits)}  
 
 # Parameters monitored
-parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f", "pi.sex", "pi.age")    # add to this before running!
+parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f", "pi.sex", "pi.age")  # add to this before running!
 
 # MCMC settings
 ni <- 8000
