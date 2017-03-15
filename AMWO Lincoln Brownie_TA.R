@@ -54,6 +54,12 @@ wings[,2] <-clean$Total[clean$Pop=="C"]    # column 2 is central
 
 dim(wings)
 
+# add 4 more rows for missing years as placeholder for now
+V1 <- c(rep(NA, 4))
+V2 <- c(rep(NA, 4))
+wings.add <- matrix(c(V1, V2), nrow=length(V1))
+wings <- rbind(wings, wings.add)
+
 # Now need to make wings.age and wings.sex datasets
 clean[,10] <- rowSums(clean[,3:5])   # adult wings column; adjust categories included if needed
 clean[,11] <- rowSums(clean[,6:8])   # juvenile wings column; adjust categories included if needed
@@ -68,6 +74,13 @@ wings.age[,2,2]<-clean$Adults[clean$Pop=="C"]    # adult central
 
 dim(wings.age)    #49 by 2 by 2 (need to add more years)
 
+# add 4 more rows for missing years as placeholder for now
+wings.new <- array(NA, dim=c(53,2,2))
+wings.new[-50:-53,,] <- wings.age
+wings.age <- wings.new
+
+dim(wings.age)
+
 # wings.sex dataset (adults only)
 wings.sex<-array(NA, dim=c(49,2,2))              # dims: t, sex (1=male; 2=female), p (1=eastern; 2=central)
 wings.sex[,1,1]<-clean$AdM[clean$Pop=="E"]      # male eastern
@@ -76,6 +89,13 @@ wings.sex[,1,2]<-clean$AdM[clean$Pop=="C"]      # male central
 wings.sex[,2,2]<-clean$AdF[clean$Pop=="C"]    # female central
 
 dim(wings.sex)  #49 by 2 by 2 (need to add more years)
+
+# add 4 more rows for missing years as placeholder for now
+wings.new <- array(NA, dim=c(53,2,2))
+wings.new[-50:-53,,] <- wings.sex
+wings.sex <- wings.new
+
+dim(wings.sex)
 
 # Bring in total harvest data
 
@@ -88,6 +108,14 @@ H.total[,1]<-clean$Harvest[clean$Pop=="E"]    # harvest in eastern pop
 H.total[,2]<-clean$Harvest[clean$Pop=="C"]    # harvest in central pop
 
 dim(H.total)      #49 by 2
+
+# add 4 more rows for missing years as placeholder for now
+V1 <- c(rep(NA, 4))
+V2 <- c(rep(NA, 4))
+H.add <- matrix(c(V1, V2), nrow=length(V1))
+H.total <- rbind(H.total, H.add)
+
+dim(H.total)
 
 #------------#
 #-BUGS Model-#
