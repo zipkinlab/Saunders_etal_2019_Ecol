@@ -1,0 +1,22 @@
+
+    model {
+for(p in 1:2){
+for (t in 1:yrs){
+  
+  pi.age[t,1,p] ~ dunif(0,1)
+  #pi.sex[t,1,p] ~ dunif(0,1)
+  #pi.sex[t,2,p] ~ dunif(0,1)
+  
+  wings.age[t,1,p] ~ dbin(pi.age[t,1,p], wings[t,p])          # pi.age is the proportion of juveniles to adults    
+  #wings.sex[t,,p] ~ dmulti(pi.sex[t,,p], wings.age[t,2,p])    # this needs to stay dmulti because of pi.sex on left-side of equations below; can't put (1-pi.sex[t,1,p]) as a derived quantity    
+  
+  
+  H[t,1,p] <- pi.age[t,1,p] * H.total[t,p]
+  #pi.combo.m[t,p] <- (1-pi.age[t,1,p])*pi.sex[t,1,p]
+  #H[t,2,p] ~ dbin(pi.combo.m[t,p], H.total[t,p])
+  #pi.combo.f[t,p] <- (1-pi.age[t,1,p])*pi.sex[t,2,p]
+  #H[t,3,p] ~ dbin(pi.combo.f[t,p], H.total[t,p])
+}#t
+}#p
+    } # end bugs model
+    

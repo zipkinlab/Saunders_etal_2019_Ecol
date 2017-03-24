@@ -126,7 +126,38 @@ cat("
     model {
   
     # Priors and constraints for population means and variances
+
+    # prior for initial pop sizes in spring             # informed prior based on Lincoln estimates
+    n[1,1,3,1] ~ dnorm(600000,1E-10)                    # initial size for female eastern
+    n[1,1,3,2] ~ dnorm(720000,1E-10)                    # initial size for female central
+    n[1,1,2,1] ~ dnorm(530000,1E-10)                    # initial size for male eastern
+    n[1,1,2,2] ~ dnorm(615000,1E-10)                    # initial size for male central
+    n[1,1,1,1] <- n[1,1,3,1] * F[1,1]                   # initial size for juv eastern
+    n[1,1,1,2] <- n[1,1,3,2] * F[1,2]                   # initial size for juv central
+
+    # round initial sizes
+    N[1,1,3,1] <- round(n[1,1,3,1])
+    N[1,1,3,2] <- round(n[1,1,3,2])
+    N[1,1,2,1] <- round(n[1,1,2,1])
+    N[1,1,2,2] <- round(n[1,1,2,2])
+    N[1,1,1,1] <- round(n[1,1,1,1])
+    N[1,1,1,2] <- round(n[1,1,1,2])
+
+    for (t in 1:yrs){
+    report[t] ~ dunif(0.15, 0.85)                       # prior for reporting rate (for now)
+    } #t
+
     for (p in 1:2){                            # 1 Eastern, 2 Central
+
+    # priors for fecundities
+    F.x[p] ~ dunif(0, 4)                       # logical bounds on fecundity (F) with 4 egg clutch 
+    F.sd[p] ~ dunif(0.01, 1) 
+    F.tau[p] <- pow(F.sd[p], -2)
+
+    for (t in 1:yrs){
+    F[t,p] ~ dnorm(F.x[p], F.tau[p])                       # Fecundity cannot be <0 or >4
+    } #t
+
     for (c in 1:3){                       
     sa.x[c,p] ~ dunif(0,1) 
     sa.mu[c,p] <- logit(sa.x[c,p])        
@@ -141,26 +172,9 @@ cat("
     sa.tau[c,p] <- pow(sa.sd[c,p],-2)          # Express as precision
     ss.tau[c,p] <- pow(ss.sd[c,p],-2) 
     f.tau[c,p] <- pow(f.sd[c,p],-2) 
-
-    # priors for fecundities
-    F.x[p] ~ dunif(0, 4)                       # logical bounds on fecundity (F) with 4 egg clutch 
-    F.sd[p] ~ dunif(0.01, 1) 
-    F.tau[p] <- pow(F.sd[p], -2)
-
-    ### TA: if these are too far off, or the jump to N2 is too improbable, the model won't update
-    ### you will need this for AdM, AdF, and locals in each population (6 total)
-
-    # prior for initial pop sizes in spring             # informed prior based on Lincoln estimates
-    N[1,1,3,1] ~ dnorm(600000,1E-10)                    # initial size for female eastern
-    N[1,1,3,2] ~ dnorm(720000,1E-10)                    # initial size for female central
-    N[1,1,2,1] ~ dnorm(530000,1E-10)                    # initial size for male eastern
-    N[1,1,2,2] ~ dnorm(615000,1E-10)                    # initial size for male central
-    N[1,1,1,1] <- N[1,1,3,1] * F[1,1]                   # initial size for juv eastern
-    N[1,1,1,2] <- N[1,1,3,2] * F[1,2]                   # initial size for juv central
-                                                
+                                          
     ## Generate annual parameter estimates
     for (t in 1:yrs){
-    report[t] ~ dunif(0.15, 0.85)                               # prior for reporting rate (for now)
     eps.sa[t,c,p] ~ dnorm(0,sa.tau[c,p])
     eps.ss[t,c,p] ~ dnorm(0,ss.tau[c,p])
     eps.f[t,c,p] ~ dnorm(0,f.tau[c,p])
@@ -169,8 +183,6 @@ cat("
     logit(ss[t,c,p]) <- ss.mu[c,p] + eps.ss[t,c,p]         # seasonal survival (summer)
     logit(f[t,c,p]) <- f.mu[c,p] + eps.f[t,c,p]            # Brownie recovery rate
 
-    # Generate process components
-    F[t,p] ~ dnorm(F.x[p], F.tau[p])                       # Fecundity cannot be <0 or >4
     } # close t
 
     ## Balance equations, assuming estimating N in both seasons
@@ -181,7 +193,7 @@ cat("
     for (t in 2:yrs){
     N[t,1,1,p] <- N[t,1,3,p] * F[t,p]          # pop size of juv in spring = adF * mean fecundity
     N[t,2,1,p] <- N[t,1,1,p]*ss[t,1,p]         # pop size of juv in late summer
-    sw[t,1,p] <- (sa[t-1,1,p]/ss[t,1,p])       # derived winter survival for juveniles
+    sw[t,1,p] <- sa[t-1,1,p]/ss[t,1,p]         # derived winter survival for juveniles
 
     for (c in 2:3){
     sw[t,c,p] <- sa[t-1,c,p]/ss[t,c,p]                                                # derived winter survival for adults
@@ -256,12 +268,13 @@ cat("
     # Bring in total harvest data
     pi.age[t,1,p] <- H[t,1,p]/H.total[t,p]                          # pi is on the left-hand side (instead of H) because we need to use H on the left-hand side below
     pi.sex[t,1,p] <- H[t,2,p]/((1-pi.age[t,1,p]) * H.total[t,p])    # can we use pi.age to inform fecundity??
-    pi.sex[t,2,p] <- H[t,3,p]/((1-pi.age[t,1,p]) * H.total[t,p])    
+    pi.sex[t,2,p] <- H[t,3,p]/((1-pi.age[t,1,p]) * H.total[t,p]) 
 
     # Harvest estimates by age-sex class are function of harvest rate and total pop size
     for (c in 1:3){
-    H[t,c,p] ~ dbinom(h[t,c,p], N[t,2,c,p])           
-    h[t,c,p] <- f[t,c,p]/report[t]                         # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
+    H[t,c,p] ~ dbin(h[t,c,p], N[t,2,c,p]) 
+    #H[t,c,p] <- h[t,c,p]*N[t,2,c,p]                  # use this instead of dbin above?
+    h[t,c,p] <- f[t,c,p]/report[t]                    # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
     } #c                                              # note that p is likely going to be multipled by vector of proportions of 1800 bands used each year
     } #t           
     } #p
@@ -274,51 +287,65 @@ bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wi
 
 ### inits not needed if they are mirror image of priors
 ### but "moderately informed inits" can become essential to get models running, so good to have    
-sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 
-fill <- runif(1,0,1)                                     
-for (p in 1:2){
-  for (c in 1:3){
-    sa.x.inits[c,p] <- fill
-  }}
 
-ss.x.inits <- matrix(NA, nrow=3, ncol=2)
-fill <- runif(1,0,1)
-for (p in 1:2){
+N.inits <- array(NA, dim=c(53, 2, 3, 2))
+for (t in 1:53){
   for (c in 1:3){
-    ss.x.inits[c,p] <- fill
-  }}
+    for (p in 1:2){
+      for (s in 1:2){
+      N.inits[t,s,c,p] <- round(runif(1, 100000, 1000000))
+    }}}}
 
-f.x.inits <- matrix(NA, nrow=3, ncol=2)
-fill <- runif(1,0,1)
-for (p in 1:2){
+H.inits <- array(NA, dim=c(53, 3, 2))
+for (t in 1:53){
   for (c in 1:3){
-    f.x.inits[c,p] <- fill
-  }}
+    for (p in 1:2){
+      H.inits[t,c,p] <- round(runif(1,50000, 600000))
+    }}}
 
-sa.sd.inits <- matrix(NA, nrow=3, ncol=2)
-fill <- runif(1,0.05,2)
-for (p in 1:2){
-  for (c in 1:3){
-    sa.sd.inits[c,p] <- fill
-  }}
+inits <- function(){list(N=N.inits, H=H.inits)}
 
-ss.sd.inits <- matrix(NA, nrow=3, ncol=2)
-fill <- runif(1,0.05,2)
-for (p in 1:2){
-  for (c in 1:3){
-    ss.sd.inits[c,p] <- fill
-  }}
+#sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 
+#fill <- runif(1,0,1)                                     
+#for (p in 1:2){
+  #for (c in 1:3){
+    #sa.x.inits[c,p] <- fill
+  #}}
 
-f.sd.inits <- matrix(NA, nrow=3, ncol=2)
-fill <- runif(1,0.05,2)
-for (p in 1:2){
-  for (c in 1:3){
-    f.sd.inits[c,p] <- fill
-  }}
+#ss.x.inits <- matrix(NA, nrow=3, ncol=2)
+#fill <- runif(1,0,1)
+#for (p in 1:2){
+  #for (c in 1:3){
+    #ss.x.inits[c,p] <- fill
+  #}}
 
-inits <- function(){list(sa.x=sa.x.inits, sa.sd=sa.sd.inits,
-                         ss.x=ss.x.inits, ss.sd=ss.sd.inits,
-                         f.x=f.x.inits, f.sd=f.sd.inits)}  
+#f.x.inits <- matrix(NA, nrow=3, ncol=2)
+#fill <- runif(1,0,1)
+#for (p in 1:2){
+  #for (c in 1:3){
+    #f.x.inits[c,p] <- fill
+  #}}
+
+#sa.sd.inits <- matrix(NA, nrow=3, ncol=2)
+#fill <- runif(1,0.05,2)
+#for (p in 1:2){
+  #for (c in 1:3){
+    #sa.sd.inits[c,p] <- fill
+  #}}
+
+#ss.sd.inits <- matrix(NA, nrow=3, ncol=2)
+#fill <- runif(1,0.05,2)
+#for (p in 1:2){
+  #for (c in 1:3){
+    #ss.sd.inits[c,p] <- fill
+  #}}
+
+#f.sd.inits <- matrix(NA, nrow=3, ncol=2)
+#fill <- runif(1,0.05,2)
+#for (p in 1:2){
+  #for (c in 1:3){
+    #f.sd.inits[c,p] <- fill
+  #}}
 
 # Parameters monitored
 parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f", "pi.sex", "pi.age")  # add to this before running!
@@ -330,6 +357,6 @@ nb <- 100
 nc <- 1
 
 # Run JAGS
-AMWO.combo.jags <- jagsUI(bugs.data, inits=NULL, parameters, "Lincoln.Brownie.23March.jags", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE) #changed from inits=NULL
+AMWO.combo.jags <- jagsUI(bugs.data, inits=inits, parameters, "Lincoln.Brownie.23March.jags", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE) #changed from inits=NULL
 
 
