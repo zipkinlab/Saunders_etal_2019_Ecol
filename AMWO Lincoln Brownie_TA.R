@@ -117,6 +117,9 @@ H.total <- rbind(H.total, H.add)
 
 dim(H.total)  #53 by 2
 
+# Ones trick vector
+ones <- array(1, dim = c(53, 3, 2))
+
 #------------#
 #-BUGS Model-#
 #------------#
@@ -266,14 +269,28 @@ cat("
     wings.sex[t,,p] ~ dmulti(pi.sex[t,,p], wings.age[t,2,p])    # this needs to stay dmulti because of pi.sex on left-side of equations below; can't put (1-pi.sex[t,1,p]) as a derived quantity    
 
     # Bring in total harvest data
-    pi.age[t,1,p] <- H[t,1,p]/H.total[t,p]                          # pi is on the left-hand side (instead of H) because we need to use H on the left-hand side below
-    pi.sex[t,1,p] <- H[t,2,p]/((1-pi.age[t,1,p]) * H.total[t,p])    # can we use pi.age to inform fecundity??
-    pi.sex[t,2,p] <- H[t,3,p]/((1-pi.age[t,1,p]) * H.total[t,p]) 
+    #pi.age[t,1,p] <- H[t,1,p]/H.total[t,p]                          # pi is on the left-hand side (instead of H) because we need to use H on the left-hand side below
+    #pi.sex[t,1,p] <- H[t,2,p]/((1-pi.age[t,1,p]) * H.total[t,p])    # can we use pi.age to inform fecundity??
+    #pi.sex[t,2,p] <- H[t,3,p]/((1-pi.age[t,1,p]) * H.total[t,p]) 
+
+    pi.sex[t,1,p] ~ dunif(0.3, 0.7)
+    pi.sex[t,2,p] ~ dunif(0.3, 0.7)
+    pi.age[t,1,p] ~ dunif(0.2, 0.8)
+
+    H[t,1,p] ~ dbin(pi.age[t,1,p], H.total[t,p])
+    pi.adM.combo[t,p] <- pi.sex[t,1,p] * (1-pi.age[t,1,p]) #probs of male and adult
+    pi.adF.combo[t,p] <- pi.sex[t,2,p] * (1-pi.age[t,1,p]) #probs of female and adult
+    H[t,2,p] ~ dbin(pi.adM.combo[t,p], H.total[t,p])
+    H[t,3,p] ~ dbin(pi.adF.combo[t,p], H.total[t,p])
 
     # Harvest estimates by age-sex class are function of harvest rate and total pop size
     for (c in 1:3){
-    H[t,c,p] ~ dbin(h[t,c,p], N[t,2,c,p]) 
-    #H[t,c,p] <- h[t,c,p]*N[t,2,c,p]                  # use this instead of dbin above?
+    #H[t,c,p] ~ dbin(h[t,c,p], N[t,2,c,p]) 
+
+    ones[t,c,p] ~ dbern(p.ones[t,c,p])
+    L[t,c,p] <- dbin(H[t,c,p], h[t,c,p], N[t,2,c,p])
+    p.ones[t,c,p] <- L[t,c,p] / 10000
+
     h[t,c,p] <- f[t,c,p]/report[t]                    # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
     } #c                                              # note that p is likely going to be multipled by vector of proportions of 1800 bands used each year
     } #t           
@@ -283,7 +300,7 @@ cat("
 sink()
 
 # Bundle data
-bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wings.age=wings.age, wings.sex=wings.sex, H.total=H.total, wings=wings)  
+bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wings.age=wings.age, wings.sex=wings.sex, H.total=H.total, wings=wings, ones = ones)  
 
 ### inits not needed if they are mirror image of priors
 ### but "moderately informed inits" can become essential to get models running, so good to have    
