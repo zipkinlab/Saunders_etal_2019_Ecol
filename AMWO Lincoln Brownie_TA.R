@@ -22,6 +22,7 @@
 #-----------------------------------------------------------------------------------------------
 
 # Make sure AMWO marray and AMWO rel are loaded into workspace
+library(jagsUI)
 
 # Load WING and HARVEST data #
 harvest <- read.csv("AMWO harvest.csv",header=TRUE)
@@ -119,6 +120,8 @@ dim(H.total)  #53 by 2
 
 # Ones trick vector
 ones <- array(1, dim = c(53, 3, 2))
+
+#Need to replace NAs in H.total with reasonable values for now; use Todd's trick for replacing NAs in wing data
 
 #------------#
 #-BUGS Model-#
