@@ -120,61 +120,61 @@ dim(H.total)  #53 by 2
 
 # Ones trick vector
 ones <- array(1, dim = c(53, 3, 2))
-
-#Need to replace NAs in H.total with reasonable values for now; use Todd's trick for replacing NAs in wing data
-H.total[1,1] <- 166098
-H.total[1,2] <- 286058
-H.total[52,1] <- 125073
-H.total[52,2] <- 361118
-H.total[53,1] <- 125073
-H.total[53,2] <- 361118
-
-# repeat for wings data
-wings[35,1] <- 4016
-wings[35,2] <- 6219
-wings[36,1] <- 8160
-wings[36,2] <- 11268
-wings[52,1] <- 10724
-wings[52,2] <- 15856
-wings[53,1] <- 10724
-wings[53,2] <- 15856
-
-# repeat for wings.age and wings.sex
-wings.age[35,1,1] <- 1719
-wings.age[35,2,1] <- 2297
-wings.age[35,1,2] <- 2711
-wings.age[35,2,2] <- 3508
-wings.age[36,1,1] <- 3276
-wings.age[36,2,1] <- 4884
-wings.age[36,1,2] <- 4476
-wings.age[36,2,2] <- 6792
-wings.age[52,1,1] <- 5118
-wings.age[52,2,1] <- 5606
-wings.age[53,1,1] <- 5118
-wings.age[53,2,1] <- 5606
-wings.age[52,1,2] <- 7318
-wings.age[52,2,2] <- 8538
-wings.age[53,1,2] <- 7318
-wings.age[53,2,2] <- 8538
-
-# repeat
-wings.sex[35,1,1] <- 901
-wings.sex[35,2,1] <- 1386
-wings.sex[35,1,2] <- 1334
-wings.sex[35,2,2] <- 2156
-wings.sex[36,1,1] <- 1980
-wings.sex[36,2,1] <- 2900
-wings.sex[36,1,2] <- 2646
-wings.sex[36,2,2] <- 4136
-wings.sex[52,1,1] <- 2204
-wings.sex[52,2,1] <- 3392
-wings.sex[53,1,1] <- 2204
-wings.sex[53,2,1] <- 3392
-wings.sex[52,1,2] <- 3088
-wings.sex[52,2,2] <- 5436
-wings.sex[53,1,2] <- 3088
-wings.sex[53,2,2] <- 5436
-
+# 
+# #Need to replace NAs in H.total with reasonable values for now; use Todd's trick for replacing NAs in wing data
+# H.total[1,1] <- 166098
+# H.total[1,2] <- 286058
+# H.total[52,1] <- 125073
+# H.total[52,2] <- 361118
+# H.total[53,1] <- 125073
+# H.total[53,2] <- 361118
+# 
+# # repeat for wings data
+# wings[35,1] <- 4016
+# wings[35,2] <- 6219
+# wings[36,1] <- 8160
+# wings[36,2] <- 11268
+# wings[52,1] <- 10724
+# wings[52,2] <- 15856
+# wings[53,1] <- 10724
+# wings[53,2] <- 15856
+# 
+# # repeat for wings.age and wings.sex
+# wings.age[35,1,1] <- 1719
+# wings.age[35,2,1] <- 2297
+# wings.age[35,1,2] <- 2711
+# wings.age[35,2,2] <- 3508
+# wings.age[36,1,1] <- 3276
+# wings.age[36,2,1] <- 4884
+# wings.age[36,1,2] <- 4476
+# wings.age[36,2,2] <- 6792
+# wings.age[52,1,1] <- 5118
+# wings.age[52,2,1] <- 5606
+# wings.age[53,1,1] <- 5118
+# wings.age[53,2,1] <- 5606
+# wings.age[52,1,2] <- 7318
+# wings.age[52,2,2] <- 8538
+# wings.age[53,1,2] <- 7318
+# wings.age[53,2,2] <- 8538
+# 
+# # repeat
+# wings.sex[35,1,1] <- 901
+# wings.sex[35,2,1] <- 1386
+# wings.sex[35,1,2] <- 1334
+# wings.sex[35,2,2] <- 2156
+# wings.sex[36,1,1] <- 1980
+# wings.sex[36,2,1] <- 2900
+# wings.sex[36,1,2] <- 2646
+# wings.sex[36,2,2] <- 4136
+# wings.sex[52,1,1] <- 2204
+# wings.sex[52,2,1] <- 3392
+# wings.sex[53,1,1] <- 2204
+# wings.sex[53,2,1] <- 3392
+# wings.sex[52,1,2] <- 3088
+# wings.sex[52,2,2] <- 5436
+# wings.sex[53,1,2] <- 3088
+# wings.sex[53,2,2] <- 5436
+# 
 
 #------------#
 #-BUGS Model-#
@@ -186,13 +186,13 @@ cat("
   
     # Priors and constraints for population means and variances
 
-    # prior for initial pop sizes in spring             # informed prior based on Lincoln estimates
-    n[1,1,3,1] ~ dnorm(600000,1E-10)                    # initial size for female eastern
-    n[1,1,3,2] ~ dnorm(720000,1E-10)                    # initial size for female central
-    n[1,1,2,1] ~ dnorm(530000,1E-10)                    # initial size for male eastern
-    n[1,1,2,2] ~ dnorm(615000,1E-10)                    # initial size for male central
-    n[1,1,1,1] <- n[1,1,3,1] * F[1,1]                   # initial size for juv eastern
-    n[1,1,1,2] <- n[1,1,3,2] * F[1,2]                   # initial size for juv central
+    # prior for initial pop sizes in spring               # informed prior based on Lincoln estimates
+    n[1,1,3,1] ~ dunif(1000000, 3000000)                  #dnorm(700000,1E-10)I(0,)                    # initial size for female eastern
+    n[1,1,3,2] ~ dunif(1000000, 3000000)                  #dnorm(1600000,5E-12)I(0,)                    # initial size for female central
+    n[1,1,2,1] ~ dunif(1000000, 3000000)                  #dnorm(530000,1E-10)I(0,)                    # initial size for male eastern
+    n[1,1,2,2] ~ dunif(1000000, 3000000)                  #dnorm(615000,1E-10)I(0,)                    # initial size for male central
+    n[1,1,1,1] <- n[1,1,3,1] * F[1,1]                        # initial size for juv eastern
+    n[1,1,1,2] <- n[1,1,3,2] * F[1,2]                        # initial size for juv central
 
     # round initial sizes
     N[1,1,3,1] <- round(n[1,1,3,1])
@@ -202,9 +202,9 @@ cat("
     N[1,1,1,1] <- round(n[1,1,1,1])
     N[1,1,1,2] <- round(n[1,1,1,2])
 
-    for (t in 1:yrs){
-    report[t] ~ dunif(0.15, 0.85)                       # prior for reporting rate (for now)
-    } #t
+    #for (t in 1:yrs){
+    #report[t] ~ dunif(0.15, 0.85)                       # prior for reporting rate (for now)
+    #} #t
 
     for (p in 1:2){                            # 1 Eastern, 2 Central
 
@@ -214,7 +214,7 @@ cat("
     F.tau[p] <- pow(F.sd[p], -2)
 
     for (t in 1:yrs){
-    F[t,p] ~ dnorm(F.x[p], F.tau[p])                       # Fecundity cannot be <0 or >4
+    F[t,p] ~ dnorm(F.x[p], F.tau[p])T(0,)                        # Fecundity cannot be <0 or >4
     } #t
 
     for (c in 1:3){                       
@@ -222,7 +222,7 @@ cat("
     sa.mu[c,p] <- logit(sa.x[c,p])        
     ss.x[c,p] ~ dunif(0,1) 
     ss.mu[c,p] <- logit(ss.x[c,p])
-    f.x[c,p] ~ dunif(0,1) 
+    f.x[c,p] ~ dunif(0,0.2) 
     f.mu[c,p] <- logit(f.x[c,p])               # note: may need a prior for pi.sex (see below for where pi.sex created)
 
     sa.sd[c,p] ~ dunif(0.05,2)                 # Priors for SDs of survival and recovery rates
@@ -338,18 +338,23 @@ cat("
     for (c in 1:3){
     ones[t,c,p] ~ dbern(p.ones[t,c,p])
     L[t,c,p] <- dbin(H[t,c,p], h[t,c,p], N[t,2,c,p])
-    p.ones[t,c,p] <- L[t,c,p] / 10000
+    p.ones[t,c,p] <- L[t,c,p]/ 10000
 
-    h[t,c,p] <- f[t,c,p]/report[t]                    # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
+    h[t,c,p] <- f[t,c,p]     #/report[t]                    # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
     } #c                                              # note that report is likely going to be multipled by vector of proportions of 1800 bands used each year
     } #t           
     } #p
 
-    #for (t in 1:yrs){
-    #for (p in 1:2){
-      #H.total[t,p] ~ dnorm(H.total.mean, H.total.sd)      # need to round if we use this to generate missing harvest data
-    #} #p
-    #} #t
+
+    for (t in 1:yrs){
+    for (p in 1:2){
+
+      H.total[t,p] ~ dpois(H.total.mean)    
+      wings[t,p] ~ dpois(wings.mean)  
+      wings.age[t,2,p] ~ dpois(wings.age.mean)
+     
+    } #p
+    } #t
     } # end bugs model
     ",fill = TRUE)
 sink()
@@ -357,32 +362,39 @@ sink()
 # Bundle data
 
 #H.total.mean <- mean(H.total, na.rm=TRUE)
-#H.total.sd <- sd(H.total, na.rm=TRUE)
+#H.total.sd=sd(H.total, na.rm=TRUE)
 
-bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wings.age=wings.age, wings.sex=wings.sex, H.total=H.total, wings=wings, ones = ones)  
+bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wings.age=wings.age, wings.sex=wings.sex, H.total=H.total, wings=wings, ones = ones,
+                  H.total.mean=mean(H.total, na.rm=TRUE),
+                  wings.mean=mean(wings, na.rm=TRUE),
+                  wings.age.mean=mean(wings.age, na.rm=TRUE)
+                  )  
 
 ### inits not needed if they are mirror image of priors
 ### but "moderately informed inits" can become essential to get models running, so good to have    
 
-N.inits <- array(NA, dim=c(53, 2, 3, 2))
-for (t in 2:53){
-  for (c in 1:3){
-    for (p in 1:2){
-      for (s in 1:2){
-      N.inits[t,s,c,p] <- round(runif(1, 100000, 1000000))
-    }}}}
+#N.inits <- array(NA, dim=c(53, 2, 3, 2))
+#for (t in 2:53){
+  #for (c in 1:3){
+    #for (p in 1:2){
+      #for (s in 1:2){
+      #N.inits[t,s,c,p] <- round(runif(1, 100000, 1000000))
+    #}}}}
 
 H.inits <- array(NA, dim=c(53, 3, 2))
 for (t in 1:53){
-  for (c in 1:3){
-    for (p in 1:2){
-      H.inits[t,c,p] <- round(runif(1,50000, 600000))
-    }}}
+      H.inits[t,1,1] <- round(rnorm(1,96000, 10000))    #juv eastern
+      H.inits[t,1,2] <- round(rnorm(1,177000, 20000))   #juv central
+      H.inits[t,2,1] <- round(rnorm(1,40000, 5000))    # male eastern
+      H.inits[t,2,2] <- round(rnorm(1,73000, 10000))   # male central
+      H.inits[t,3,1] <- round(rnorm(1,60000, 10000))   # female eastern
+      H.inits[t,3,2] <- round(rnorm(1,116000, 20000))   #female central
+    }
 
 f.x.inits <- matrix(NA, nrow=3, ncol=2)
 for (c in 1:3){
   for (p in 1:2){
-    f.x.inits[c,p] <- runif(1, 0.4, 0.6)
+    f.x.inits[c,p] <- runif(1, 0, 0.1)
   }}
 
 pi.sex.inits <- array(NA, dim=c(53,2,2))
@@ -411,40 +423,23 @@ for (p in 1:2){
     ss.x.inits[c,p] <- fill
   }}
 
-#f.x.inits <- matrix(NA, nrow=3, ncol=2)
-#fill <- runif(1,0,1)
-#for (p in 1:2){
-  #for (c in 1:3){
-    #f.x.inits[c,p] <- fill
-  #}}
-
-#sa.sd.inits <- matrix(NA, nrow=3, ncol=2)
-#fill <- runif(1,0.05,2)
-#for (p in 1:2){
-  #for (c in 1:3){
-    #sa.sd.inits[c,p] <- fill
-  #}}
-
-#ss.sd.inits <- matrix(NA, nrow=3, ncol=2)
-#fill <- runif(1,0.05,2)
-#for (p in 1:2){
-  #for (c in 1:3){
-    #ss.sd.inits[c,p] <- fill
-  #}}
-
-#f.sd.inits <- matrix(NA, nrow=3, ncol=2)
-#fill <- runif(1,0.05,2)
-#for (p in 1:2){
-  #for (c in 1:3){
-    #f.sd.inits[c,p] <- fill
-  #}}
-
 report.inits <- rep(NA, 53)
 for (t in 1:53){
   report.inits[t] <- runif(1, 0.4, 0.85)
 }
 
-inits <- function(){list(H=H.inits,f.x=f.x.inits,pi.sex=pi.sex.inits, f.sd=f.sd.inits, sa.x=sa.x.inits, ss.x=ss.x.inits, report=report.inits)}                 
+n.inits <- array(NA, dim=c(1,1,3,2))
+n.inits[1,1,3,1] <- 2000000
+n.inits[1,1,3,2] <- 1600000
+n.inits[1,1,2,1] <- 1200000
+n.inits[1,1,2,2] <- 1700000
+
+F.x.inits <- rep(NA, 2)
+for (p in 1:2){
+  F.x.inits[p] <- 2.5
+}
+
+inits <- function(){list(H=H.inits,pi.sex=pi.sex.inits, sa.x=sa.x.inits, ss.x=ss.x.inits, n=n.inits, f.sd=f.sd.inits,f.x=f.x.inits, F.x=F.x.inits)} #,report=report.inits)}                 
 
 # Parameters monitored
 parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f", "pi.sex", "pi.age")  # add to this before running!
@@ -457,5 +452,7 @@ nc <- 1
 
 # Run JAGS
 AMWO.combo.jags <- jagsUI(bugs.data, inits=inits, parameters, "Lincoln.Brownie.30March.jags", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE) #changed from inits=NULL
+
+#female eastern: 0.024; female central: 0.05; M east: 0.027; M central: 0.031; juv east: 0.036; juv central: 0.04
 
 

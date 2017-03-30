@@ -1,0 +1,171 @@
+
+    model {
+  
+    # Priors and constraints for population means and variances
+
+    # prior for initial pop sizes in spring             # informed prior based on Lincoln estimates
+    n[1,1,3,1] ~ dnorm(600000,1E-10)                    # initial size for female eastern
+    n[1,1,3,2] ~ dnorm(720000,1E-10)                    # initial size for female central
+    n[1,1,2,1] ~ dnorm(530000,1E-10)                    # initial size for male eastern
+    n[1,1,2,2] ~ dnorm(615000,1E-10)                    # initial size for male central
+    n[1,1,1,1] <- n[1,1,3,1] * F[1,1]                   # initial size for juv eastern
+    n[1,1,1,2] <- n[1,1,3,2] * F[1,2]                   # initial size for juv central
+
+    # round initial sizes
+    N[1,1,3,1] <- round(n[1,1,3,1])
+    N[1,1,3,2] <- round(n[1,1,3,2])
+    N[1,1,2,1] <- round(n[1,1,2,1])
+    N[1,1,2,2] <- round(n[1,1,2,2])
+    N[1,1,1,1] <- round(n[1,1,1,1])
+    N[1,1,1,2] <- round(n[1,1,1,2])
+
+    for (t in 1:yrs){
+    report[t] ~ dunif(0.15, 0.85)                       # prior for reporting rate (for now)
+    } #t
+
+    for (p in 1:2){                            # 1 Eastern, 2 Central
+
+    # priors for fecundities
+    F.x[p] ~ dunif(0, 4)                       # logical bounds on fecundity (F) with 4 egg clutch 
+    F.sd[p] ~ dunif(0.01, 1) 
+    F.tau[p] <- pow(F.sd[p], -2)
+
+    for (t in 1:yrs){
+    F[t,p] ~ dnorm(F.x[p], F.tau[p])                       # Fecundity cannot be <0 or >4
+    } #t
+
+    for (c in 1:3){                       
+    sa.x[c,p] ~ dunif(0,1) 
+    sa.mu[c,p] <- logit(sa.x[c,p])        
+    ss.x[c,p] ~ dunif(0,1) 
+    ss.mu[c,p] <- logit(ss.x[c,p])
+    f.x[c,p] ~ dunif(0,1) 
+    f.mu[c,p] <- logit(f.x[c,p])               # note: may need a prior for pi.sex (see below for where pi.sex created)
+
+    sa.sd[c,p] ~ dunif(0.05,2)                 # Priors for SDs of survival and recovery rates
+    ss.sd[c,p] ~ dunif(0.05,2) 
+    f.sd[c,p] ~ dunif(0.05,2) 
+    sa.tau[c,p] <- pow(sa.sd[c,p],-2)          # Express as precision
+    ss.tau[c,p] <- pow(ss.sd[c,p],-2) 
+    f.tau[c,p] <- pow(f.sd[c,p],-2) 
+                                          
+    ## Generate annual parameter estimates
+    for (t in 1:yrs){
+    eps.sa[t,c,p] ~ dnorm(0,sa.tau[c,p])
+    eps.ss[t,c,p] ~ dnorm(0,ss.tau[c,p])
+    eps.f[t,c,p] ~ dnorm(0,f.tau[c,p])
+    
+    logit(sa[t,c,p]) <- sa.mu[c,p] + eps.sa[t,c,p]         # annual survival (by year, cohort, pop)
+    logit(ss[t,c,p]) <- ss.mu[c,p] + eps.ss[t,c,p]         # seasonal survival (summer)
+    logit(f[t,c,p]) <- f.mu[c,p] + eps.f[t,c,p]            # Brownie recovery rate
+
+    } # close t
+
+    ## Balance equations, assuming estimating N in both seasons
+    # Initial pop sizes in summer [t, s, c, p]
+    N[1,2,c,p] <- N[1,1,c,p]*ss[1,c,p]         # pop size in late summer is function of summer survival 
+    } #c
+
+    for (t in 2:yrs){
+    N[t,1,1,p] <- N[t,1,3,p] * F[t,p]          # pop size of juv in spring = adF * mean fecundity
+    N[t,2,1,p] <- N[t,1,1,p]*ss[t,1,p]         # pop size of juv in late summer
+    sw[t,1,p] <- sa[t-1,1,p]/ss[t,1,p]         # derived winter survival for juveniles
+
+    for (c in 2:3){
+    sw[t,c,p] <- sa[t-1,c,p]/ss[t,c,p]                                                # derived winter survival for adults
+    N[t,1,c,p] <- N[t-1,2,c,p]*sw[t,c,p] + pi.sex[t,c-1,p]*N[t-1,2,1,p]*sw[t,1,p]     # pop size of adults in spring
+    N[t,2,c,p] <- N[t,1,c,p]*ss[t,c,p]                                                # pop size of adults in late summer 
+    } #c
+    } #t 
+
+    # Observation process, recoveries and harvest data
+    # Recoveries
+    # Note: releases MUST be provided as data; we have saved as relAMWO
+    for (c in 1:3){
+    for (t in 1:yrs){
+    marrayAMWO[t,1:(yrs+1),1,c,p] ~ dmulti(pr[t,,1,c,p], rel[t,1,c,p])        # Apr-Jun releases     
+    marrayAMWO[t,1:(yrs+1),2,c,p] ~ dmulti(pr[t,,2,c,p], rel[t,2,c,p])        # Jul-Sep releases
+    
+    ## Define cell probabilities of m-arrays
+    # Main diagonal--direct recovery in season [t]
+    pr[t,t,1,c,p] <- ss[t,c,p] * f[t,c,p]                  # spring banded birds must survive to start of hunting season
+    pr[t,t,2,c,p] <- f[t,c,p]                              # survival assumed 1 if banded Jul-Sep
+    
+    # monitor cumulative survival to start of next hunting season (previously surv; used in subsequent diagonals)
+    cumS[t,t,1,c,p] <- ss[t,c,p] * sa[t,c,p]
+    cumS[t,t,2,c,p] <- sa[t,c,p]
+    } # t
+    } # c
+    
+    for (t in 1:yrs){
+    # Above main diagonal--indirect recovery in season [k > t]
+    # All birds are adults now, no differences between Apr-Jun and Jul-Sep either
+    for (k in (t+1):yrs){                                                                       # k loop to represent next year (above main diagonal)
+    # recoveries
+    pr[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*f[k,2,p] + pi.sex[t,2,p]*f[k,3,p])     # juvs as mixture of AdM & AdF
+    pr[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*f[k,2,p] + pi.sex[t,2,p]*f[k,3,p])    # pi.sex[,1,] is proportion male; pi.sex[,2,] is proportion female. See below       
+    pr[t,k,1,2,p] <- cumS[t,k-1,1,2,p] * f[k,2,p] 
+    pr[t,k,2,2,p] <- cumS[t,k-1,2,2,p] * f[k,2,p] 
+    pr[t,k,1,3,p] <- cumS[t,k-1,1,3,p] * f[k,3,p] 
+    pr[t,k,2,3,p] <- cumS[t,k-1,2,3,p] * f[k,3,p] 
+    # monitor cumulative survival to start of next hunting period
+    cumS[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + pi.sex[t,2,p]*sa[k,3,p]) # juvs as mixture AdM & AdF
+    cumS[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + pi.sex[t,2,p]*sa[k,3,p]) 
+    cumS[t,k,1,2,p] <- cumS[t,k-1,1,2,p] * sa[k,2,p]
+    cumS[t,k,2,2,p] <- cumS[t,k-1,2,2,p] * sa[k,2,p]
+    cumS[t,k,1,3,p] <- cumS[t,k-1,1,3,p] * sa[k,3,p]
+    cumS[t,k,2,3,p] <- cumS[t,k-1,2,3,p] * sa[k,3,p]
+    } #k
+    
+    # Left of main diag
+    for (l in 1:(t-1)){           #l loop for previous year (left of main diagonal)                    
+    pr[t,l,1,1,p] <- 0
+    pr[t,l,1,2,p] <- 0
+    pr[t,l,1,3,p] <- 0
+    pr[t,l,2,1,p] <- 0
+    pr[t,l,2,2,p] <- 0
+    pr[t,l,2,3,p] <- 0
+    } #l
+    
+    # Last column: probability of non-recovery
+    pr[t,(yrs+1),1,1,p] <- 1-sum(pr[t,1:yrs,1,1,p])
+    pr[t,(yrs+1),1,2,p] <- 1-sum(pr[t,1:yrs,1,2,p])
+    pr[t,(yrs+1),1,3,p] <- 1-sum(pr[t,1:yrs,1,3,p])
+    pr[t,(yrs+1),2,1,p] <- 1-sum(pr[t,1:yrs,2,1,p])
+    pr[t,(yrs+1),2,2,p] <- 1-sum(pr[t,1:yrs,2,2,p])
+    pr[t,(yrs+1),2,3,p] <- 1-sum(pr[t,1:yrs,2,3,p])
+    } #t
+
+    # Summarize known wing samples by age and sex
+    for (t in 1:yrs){
+    wings.age[t,1,p] ~ dbin(pi.age[t,1,p], wings[t,p])          # pi.age is the proportion of juveniles to adults    
+    wings.sex[t,1,p] ~ dbin(pi.sex[t,1,p], wings.age[t,2,p])    # pi.sex is adult males:adult females    
+
+    pi.sex[t,1,p] ~ dunif(0.3, 0.7)
+    pi.sex[t,2,p] <- 1-pi.sex[t,1,p]
+    pi.age[t,1,p] ~ dunif(0.2, 0.8)
+
+    H[t,1,p] ~ dbin(pi.age[t,1,p], H.total[t,p])
+    pi.adM.combo[t,p] <- pi.sex[t,1,p] * (1-pi.age[t,1,p])      # probs of male and adult
+    pi.adF.combo[t,p] <- pi.sex[t,2,p] * (1-pi.age[t,1,p])  # probs of female and adult
+    H[t,2,p] ~ dbin(pi.adM.combo[t,p], H.total[t,p])
+    H[t,3,p] ~ dbin(pi.adF.combo[t,p], H.total[t,p])
+
+    # Harvest estimates by age-sex class are function of harvest rate and total pop size
+    for (c in 1:3){
+    ones[t,c,p] ~ dbern(p.ones[t,c,p])
+    L[t,c,p] <- dbin(H[t,c,p], h[t,c,p], N[t,2,c,p])
+    p.ones[t,c,p] <- L[t,c,p] / 10000
+
+    h[t,c,p] <- f[t,c,p]/report[t]                    # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
+    } #c                                              # note that report is likely going to be multipled by vector of proportions of 1800 bands used each year
+    } #t           
+    } #p
+
+    #for (t in 1:yrs){
+    #for (p in 1:2){
+      #H.total[t,p] ~ dnorm(H.total.mean, H.total.sd)      # need to round if we use this to generate missing harvest data
+    #} #p
+    #} #t
+    } # end bugs model
+    
