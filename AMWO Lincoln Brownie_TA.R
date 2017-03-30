@@ -122,12 +122,65 @@ dim(H.total)  #53 by 2
 ones <- array(1, dim = c(53, 3, 2))
 
 #Need to replace NAs in H.total with reasonable values for now; use Todd's trick for replacing NAs in wing data
+H.total[1,1] <- 166098
+H.total[1,2] <- 286058
+H.total[52,1] <- 125073
+H.total[52,2] <- 361118
+H.total[53,1] <- 125073
+H.total[53,2] <- 361118
+
+# repeat for wings data
+wings[35,1] <- 4016
+wings[35,2] <- 6219
+wings[36,1] <- 8160
+wings[36,2] <- 11268
+wings[52,1] <- 10724
+wings[52,2] <- 15856
+wings[53,1] <- 10724
+wings[53,2] <- 15856
+
+# repeat for wings.age and wings.sex
+wings.age[35,1,1] <- 1719
+wings.age[35,2,1] <- 2297
+wings.age[35,1,2] <- 2711
+wings.age[35,2,2] <- 3508
+wings.age[36,1,1] <- 3276
+wings.age[36,2,1] <- 4884
+wings.age[36,1,2] <- 4476
+wings.age[36,2,2] <- 6792
+wings.age[52,1,1] <- 5118
+wings.age[52,2,1] <- 5606
+wings.age[53,1,1] <- 5118
+wings.age[53,2,1] <- 5606
+wings.age[52,1,2] <- 7318
+wings.age[52,2,2] <- 8538
+wings.age[53,1,2] <- 7318
+wings.age[53,2,2] <- 8538
+
+# repeat
+wings.sex[35,1,1] <- 901
+wings.sex[35,2,1] <- 1386
+wings.sex[35,1,2] <- 1334
+wings.sex[35,2,2] <- 2156
+wings.sex[36,1,1] <- 1980
+wings.sex[36,2,1] <- 2900
+wings.sex[36,1,2] <- 2646
+wings.sex[36,2,2] <- 4136
+wings.sex[52,1,1] <- 2204
+wings.sex[52,2,1] <- 3392
+wings.sex[53,1,1] <- 2204
+wings.sex[53,2,1] <- 3392
+wings.sex[52,1,2] <- 3088
+wings.sex[52,2,2] <- 5436
+wings.sex[53,1,2] <- 3088
+wings.sex[53,2,2] <- 5436
+
 
 #------------#
 #-BUGS Model-#
 #------------#
 
-sink("Lincoln.Brownie.23March.jags")
+sink("Lincoln.Brownie.30March.jags")
 cat("
     model {
   
@@ -269,47 +322,50 @@ cat("
     # Summarize known wing samples by age and sex
     for (t in 1:yrs){
     wings.age[t,1,p] ~ dbin(pi.age[t,1,p], wings[t,p])          # pi.age is the proportion of juveniles to adults    
-    wings.sex[t,,p] ~ dmulti(pi.sex[t,,p], wings.age[t,2,p])    # this needs to stay dmulti because of pi.sex on left-side of equations below; can't put (1-pi.sex[t,1,p]) as a derived quantity    
-
-    # Bring in total harvest data
-    #pi.age[t,1,p] <- H[t,1,p]/H.total[t,p]                          # pi is on the left-hand side (instead of H) because we need to use H on the left-hand side below
-    #pi.sex[t,1,p] <- H[t,2,p]/((1-pi.age[t,1,p]) * H.total[t,p])    # can we use pi.age to inform fecundity??
-    #pi.sex[t,2,p] <- H[t,3,p]/((1-pi.age[t,1,p]) * H.total[t,p]) 
+    wings.sex[t,1,p] ~ dbin(pi.sex[t,1,p], wings.age[t,2,p])    # pi.sex is adult males:adult females    
 
     pi.sex[t,1,p] ~ dunif(0.3, 0.7)
-    pi.sex[t,2,p] ~ dunif(0.3, 0.7)
+    pi.sex[t,2,p] <- 1-pi.sex[t,1,p]
     pi.age[t,1,p] ~ dunif(0.2, 0.8)
 
     H[t,1,p] ~ dbin(pi.age[t,1,p], H.total[t,p])
-    pi.adM.combo[t,p] <- pi.sex[t,1,p] * (1-pi.age[t,1,p]) #probs of male and adult
-    pi.adF.combo[t,p] <- pi.sex[t,2,p] * (1-pi.age[t,1,p]) #probs of female and adult
+    pi.adM.combo[t,p] <- pi.sex[t,1,p] * (1-pi.age[t,1,p])      # probs of male and adult
+    pi.adF.combo[t,p] <- pi.sex[t,2,p] * (1-pi.age[t,1,p])  # probs of female and adult
     H[t,2,p] ~ dbin(pi.adM.combo[t,p], H.total[t,p])
     H[t,3,p] ~ dbin(pi.adF.combo[t,p], H.total[t,p])
 
     # Harvest estimates by age-sex class are function of harvest rate and total pop size
     for (c in 1:3){
-    #H[t,c,p] ~ dbin(h[t,c,p], N[t,2,c,p]) 
-
     ones[t,c,p] ~ dbern(p.ones[t,c,p])
     L[t,c,p] <- dbin(H[t,c,p], h[t,c,p], N[t,2,c,p])
     p.ones[t,c,p] <- L[t,c,p] / 10000
 
     h[t,c,p] <- f[t,c,p]/report[t]                    # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
-    } #c                                              # note that p is likely going to be multipled by vector of proportions of 1800 bands used each year
+    } #c                                              # note that report is likely going to be multipled by vector of proportions of 1800 bands used each year
     } #t           
     } #p
+
+    #for (t in 1:yrs){
+    #for (p in 1:2){
+      #H.total[t,p] ~ dnorm(H.total.mean, H.total.sd)      # need to round if we use this to generate missing harvest data
+    #} #p
+    #} #t
     } # end bugs model
     ",fill = TRUE)
 sink()
 
 # Bundle data
+
+#H.total.mean <- mean(H.total, na.rm=TRUE)
+#H.total.sd <- sd(H.total, na.rm=TRUE)
+
 bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wings.age=wings.age, wings.sex=wings.sex, H.total=H.total, wings=wings, ones = ones)  
 
 ### inits not needed if they are mirror image of priors
 ### but "moderately informed inits" can become essential to get models running, so good to have    
 
 N.inits <- array(NA, dim=c(53, 2, 3, 2))
-for (t in 1:53){
+for (t in 2:53){
   for (c in 1:3){
     for (p in 1:2){
       for (s in 1:2){
@@ -323,21 +379,37 @@ for (t in 1:53){
       H.inits[t,c,p] <- round(runif(1,50000, 600000))
     }}}
 
-inits <- function(){list(N=N.inits, H=H.inits)}
+f.x.inits <- matrix(NA, nrow=3, ncol=2)
+for (c in 1:3){
+  for (p in 1:2){
+    f.x.inits[c,p] <- runif(1, 0.4, 0.6)
+  }}
 
-#sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 
-#fill <- runif(1,0,1)                                     
-#for (p in 1:2){
-  #for (c in 1:3){
-    #sa.x.inits[c,p] <- fill
-  #}}
+pi.sex.inits <- array(NA, dim=c(53,2,2))
+for (t in 1:53){
+  for (p in 1:2){
+    pi.sex.inits[t,1,p] <- 0.5
+  }}
 
-#ss.x.inits <- matrix(NA, nrow=3, ncol=2)
-#fill <- runif(1,0,1)
-#for (p in 1:2){
-  #for (c in 1:3){
-    #ss.x.inits[c,p] <- fill
-  #}}
+f.sd.inits <- matrix(NA, nrow=3, ncol=2)
+for (c in 1:3){
+  for (p in 1:2){
+    f.sd.inits[c,p] <- runif(1, 0.05, 1.5)
+  }}
+
+sa.x.inits <- matrix(NA, nrow=3, ncol=2)                                                 
+fill <- runif(1,0.2,0.9)                                     
+for (p in 1:2){
+  for (c in 1:3){
+    sa.x.inits[c,p] <- fill
+  }}
+
+ss.x.inits <- matrix(NA, nrow=3, ncol=2)
+fill <- runif(1,0.1,0.6)
+for (p in 1:2){
+  for (c in 1:3){
+    ss.x.inits[c,p] <- fill
+  }}
 
 #f.x.inits <- matrix(NA, nrow=3, ncol=2)
 #fill <- runif(1,0,1)
@@ -367,6 +439,13 @@ inits <- function(){list(N=N.inits, H=H.inits)}
     #f.sd.inits[c,p] <- fill
   #}}
 
+report.inits <- rep(NA, 53)
+for (t in 1:53){
+  report.inits[t] <- runif(1, 0.4, 0.85)
+}
+
+inits <- function(){list(H=H.inits,f.x=f.x.inits,pi.sex=pi.sex.inits, f.sd=f.sd.inits, sa.x=sa.x.inits, ss.x=ss.x.inits, report=report.inits)}                 
+
 # Parameters monitored
 parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f", "pi.sex", "pi.age")  # add to this before running!
 
@@ -377,6 +456,6 @@ nb <- 100
 nc <- 1
 
 # Run JAGS
-AMWO.combo.jags <- jagsUI(bugs.data, inits=inits, parameters, "Lincoln.Brownie.23March.jags", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE) #changed from inits=NULL
+AMWO.combo.jags <- jagsUI(bugs.data, inits=inits, parameters, "Lincoln.Brownie.30March.jags", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE) #changed from inits=NULL
 
 
