@@ -381,7 +381,7 @@ bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wi
       #N.inits[t,s,c,p] <- round(runif(1, 100000, 1000000))
     #}}}}
 
-H.inits <- array(NA, dim=c(53, 3, 2))
+H.inits <- array(NA, dim=c(53, 3, 2))   #need this to be by t as well?
 for (t in 1:53){
       H.inits[t,1,1] <- round(rnorm(1,96000, 10000))    #juv eastern
       H.inits[t,1,2] <- round(rnorm(1,177000, 20000))   #juv central
@@ -454,5 +454,6 @@ nc <- 1
 AMWO.combo.jags <- jagsUI(bugs.data, inits=inits, parameters, "Lincoln.Brownie.30March.jags", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb,parallel=TRUE) #changed from inits=NULL
 
 #female eastern: 0.024; female central: 0.05; M east: 0.027; M central: 0.031; juv east: 0.036; juv central: 0.04
+#females central: 116000; females eastern: 60000; males central: 73000; males eastern: 40000 ; juv central: 177000; juv eastern: 96000
 
 
