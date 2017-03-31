@@ -222,7 +222,7 @@ cat("
     sa.mu[c,p] <- logit(sa.x[c,p])        
     ss.x[c,p] ~ dunif(0,1) 
     ss.mu[c,p] <- logit(ss.x[c,p])
-    f.x[c,p] ~ dunif(0,0.2) 
+    f.x[c,p] ~ dunif(0,0.1) 
     f.mu[c,p] <- logit(f.x[c,p])               # note: may need a prior for pi.sex (see below for where pi.sex created)
 
     sa.sd[c,p] ~ dunif(0.05,2)                 # Priors for SDs of survival and recovery rates
@@ -394,7 +394,7 @@ for (t in 1:53){
 f.x.inits <- matrix(NA, nrow=3, ncol=2)
 for (c in 1:3){
   for (p in 1:2){
-    f.x.inits[c,p] <- runif(1, 0, 0.1)
+    f.x.inits[c,p] <- runif(1, 0, 0.05)
   }}
 
 pi.sex.inits <- array(NA, dim=c(53,2,2))
