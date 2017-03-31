@@ -1,0 +1,16 @@
+#!/bin/sh -login
+#PBS -l nodes=1:ppn=1,walltime=3:59:00,mem=2gb
+#PBS -N zAMWO_HM
+#PBS -t 1-1000
+ 
+# Change to the directory that the qsub command will be executed from
+cd $PBS_O_WORKDIR
+
+#load jags module
+module load JAGS/4.0.0
+module load R/3.1.1
+
+# Run R Command with input script myRprogram.R
+R < AMWO_HM.R --no-save
+
+qstat -f ${PBS_JOBID}
