@@ -99,9 +99,11 @@ wings.sex <- wings.new
 dim(wings.sex)
 
 # Bring in total harvest data
-
-#add total harvest column to clean
-clean[,12] <- harvest$Harvest
+#add total harvest column to clean. 
+############
+##NOTE: this is Harvest_Est column using harvest estimates from Todd's model!#####
+############
+clean[,12] <- harvest$Harvest_Est
 colnames(clean)<-c("Year","Pop","AdF","AdM","AdU","JuvF","JuvM","JuvU","Total","Adults","Juvs","Harvest")
 
 H.total<-matrix(NA, nrow=51, ncol=2)          #dims: t by p (1=eastern; 2=central)
@@ -118,63 +120,8 @@ H.total <- rbind(H.total, H.add)
 
 dim(H.total)  #53 by 2
 
-# Ones trick vector
-ones <- array(1, dim = c(53, 3, 2))
-# 
-# #Need to replace NAs in H.total with reasonable values for now; use Todd's trick for replacing NAs in wing data
-# H.total[1,1] <- 166098
-# H.total[1,2] <- 286058
-# H.total[52,1] <- 125073
-# H.total[52,2] <- 361118
-# H.total[53,1] <- 125073
-# H.total[53,2] <- 361118
-# 
-# # repeat for wings data
-# wings[35,1] <- 4016
-# wings[35,2] <- 6219
-# wings[36,1] <- 8160
-# wings[36,2] <- 11268
-# wings[52,1] <- 10724
-# wings[52,2] <- 15856
-# wings[53,1] <- 10724
-# wings[53,2] <- 15856
-# 
-# # repeat for wings.age and wings.sex
-# wings.age[35,1,1] <- 1719
-# wings.age[35,2,1] <- 2297
-# wings.age[35,1,2] <- 2711
-# wings.age[35,2,2] <- 3508
-# wings.age[36,1,1] <- 3276
-# wings.age[36,2,1] <- 4884
-# wings.age[36,1,2] <- 4476
-# wings.age[36,2,2] <- 6792
-# wings.age[52,1,1] <- 5118
-# wings.age[52,2,1] <- 5606
-# wings.age[53,1,1] <- 5118
-# wings.age[53,2,1] <- 5606
-# wings.age[52,1,2] <- 7318
-# wings.age[52,2,2] <- 8538
-# wings.age[53,1,2] <- 7318
-# wings.age[53,2,2] <- 8538
-# 
-# # repeat
-# wings.sex[35,1,1] <- 901
-# wings.sex[35,2,1] <- 1386
-# wings.sex[35,1,2] <- 1334
-# wings.sex[35,2,2] <- 2156
-# wings.sex[36,1,1] <- 1980
-# wings.sex[36,2,1] <- 2900
-# wings.sex[36,1,2] <- 2646
-# wings.sex[36,2,2] <- 4136
-# wings.sex[52,1,1] <- 2204
-# wings.sex[52,2,1] <- 3392
-# wings.sex[53,1,1] <- 2204
-# wings.sex[53,2,1] <- 3392
-# wings.sex[52,1,2] <- 3088
-# wings.sex[52,2,2] <- 5436
-# wings.sex[53,1,2] <- 3088
-# wings.sex[53,2,2] <- 5436
-# 
+## Ones trick vector ##################################
+ones <- array(1, dim = c(53, 3, 2)) 
 
 #------------#
 #-BUGS Model-#
@@ -187,10 +134,10 @@ cat("
     # Priors and constraints for population means and variances
 
     # prior for initial pop sizes in spring               # informed prior based on Lincoln estimates
-    n[1,1,3,1] ~ dunif(1000000, 3000000)                  #dnorm(700000,1E-10)I(0,)                    # initial size for female eastern
-    n[1,1,3,2] ~ dunif(1000000, 3000000)                  #dnorm(1600000,5E-12)I(0,)                    # initial size for female central
-    n[1,1,2,1] ~ dunif(1000000, 3000000)                  #dnorm(530000,1E-10)I(0,)                    # initial size for male eastern
-    n[1,1,2,2] ~ dunif(1000000, 3000000)                  #dnorm(615000,1E-10)I(0,)                    # initial size for male central
+    n[1,1,3,1] ~ dunif(1000000, 3000000)                  #dnorm(700000,1E-10)I(0,)     # initial size for female eastern
+    n[1,1,3,2] ~ dunif(1000000, 3000000)                  #dnorm(1600000,5E-12)I(0,)    # initial size for female central
+    n[1,1,2,1] ~ dunif(1000000, 3000000)                  #dnorm(530000,1E-10)I(0,)     # initial size for male eastern
+    n[1,1,2,2] ~ dunif(1000000, 3000000)                  #dnorm(615000,1E-10)I(0,)     # initial size for male central
     n[1,1,1,1] <- n[1,1,3,1] * F[1,1]                        # initial size for juv eastern
     n[1,1,1,2] <- n[1,1,3,2] * F[1,2]                        # initial size for juv central
 
@@ -346,7 +293,7 @@ cat("
     } #p
 
 
-    for (t in 1:yrs){
+    for (t in 1:yrs){                                # imputation model to replace NAs in harvest/wings data
     for (p in 1:2){
 
       H.total[t,p] ~ dpois(H.total.mean)    
@@ -361,17 +308,13 @@ sink()
 
 # Bundle data
 
-#H.total.mean <- mean(H.total, na.rm=TRUE)
-#H.total.sd=sd(H.total, na.rm=TRUE)
-
 bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, wings.age=wings.age, wings.sex=wings.sex, H.total=H.total, wings=wings, ones = ones,
                   H.total.mean=mean(H.total, na.rm=TRUE),
                   wings.mean=mean(wings, na.rm=TRUE),
                   wings.age.mean=mean(wings.age, na.rm=TRUE)
                   )  
 
-### inits not needed if they are mirror image of priors
-### but "moderately informed inits" can become essential to get models running, so good to have    
+# inits
 
 #N.inits <- array(NA, dim=c(53, 2, 3, 2))
 #for (t in 2:53){
