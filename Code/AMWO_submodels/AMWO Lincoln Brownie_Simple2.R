@@ -168,9 +168,9 @@ sink()
 
 # Bundle data
 
-pi[1] <- 0.46
-pi[2] <- 0.21
-pi[3] <- 0.33
+pi[1] <- 0.46   #juvs
+pi[2] <- 0.21   # adult males
+pi[3] <- 0.33   # adult females
 
 H <- array(NA, dim = c(53,3,2))
 for(t in 1:53){
