@@ -71,18 +71,18 @@ cat("
     
     ## Balance equations, assuming estimating N in both seasons
     # Initial pop sizes in summer [t, s, c, p]
-    N[1,2,c,p] <- N[1,1,c,p]*ss[1,c,p]         # pop size in late summer is function of summer survival 
+    N[1,2,c,p] <- trunc(N[1,1,c,p]*ss[1,c,p])         # pop size in late summer is function of summer survival 
     } #c
     
     for (t in 2:yrs){
-    N[t,1,1,p] <- N[t,1,3,p] * F[t,p]          # pop size of juv in spring = adF * mean fecundity
-    N[t,2,1,p] <- N[t,1,1,p]*ss[t,1,p]         # pop size of juv in late summer
+    N[t,1,1,p] <- trunc(N[t,1,3,p] * F[t,p])          # pop size of juv in spring = adF * mean fecundity
+    N[t,2,1,p] <- trunc(N[t,1,1,p]*ss[t,1,p])         # pop size of juv in late summer
     sw[t,1,p] <- sa[t-1,1,p]/ss[t,1,p]         # derived winter survival for juveniles
     
     for (c in 2:3){
     sw[t,c,p] <- sa[t-1,c,p]/ss[t,c,p]                                            # derived winter survival for adults
-    N[t,1,c,p] <- N[t-1,2,c,p]*sw[t,c,p] + pi.sex[c-1]*N[t-1,2,1,p]*sw[t,1,p]     # pop size of adults in spring
-    N[t,2,c,p] <- N[t,1,c,p]*ss[t,c,p]                                            # pop size of adults in late summer 
+    N[t,1,c,p] <- trunc(N[t-1,2,c,p]*sw[t,c,p] + pi.sex[c-1]*N[t-1,2,1,p]*sw[t,1,p])     # pop size of adults in spring
+    N[t,2,c,p] <- trunc(N[t,1,c,p]*ss[t,c,p])                                            # pop size of adults in late summer 
     } #c
     } #t 
     
@@ -146,29 +146,22 @@ cat("
     
     for (t in 1:yrs){
     # Generate age-class harvest proportions
-    H[t,1,p] <- pi[1]*H.total[t,p]
-    H[t,2,p] <- pi[2]*H.total[t,p]
-    H[t,3,p] <- pi[3]*H.total[t,p]
+    #H[t,1,p] <- pi[1]*H.total[t,p]
+    #H[t,2,p] <- pi[2]*H.total[t,p]
+    #H[t,3,p] <- pi[3]*H.total[t,p]
     
     # Harvest estimates by age-sex class are function of harvest rate and total pop size
     for (c in 1:3){
-    ones[t,c,p] ~ dbern(p.ones[t,c,p])
-    L[t,c,p] <- dbin(H[t,c,p], h[t,c,p], N[t,2,c,p])
-    p.ones[t,c,p] <- L[t,c,p]/ 10000
+    #ones[t,c,p] ~ dbern(p.ones[t,c,p])
+    #L[t,c,p] <- dbin(H[t,c,p], h[t,c,p], N[t,2,c,p])
+    #p.ones[t,c,p] <- L[t,c,p]/ 10000
+
+    H[t,c,p] ~ dbin(h[t,c,p], N[t,2,c,p])
     
     h[t,c,p] <- f[t,c,p]/0.506                   # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
     } #c                                              # note that report is likely going to be multipled by vector of proportions of 1800 bands used each year
     } #t           
     } #p
-    
-    
-    for (t in 1:yrs){                                # imputation model to replace NAs in harvest/wings data
-    for (p in 1:2){
-    
-    H.total[t,p] ~ dpois(H.total.mean)
-    
-    } #p
-    } #t
     } # end bugs model
     ",fill = TRUE)
 sink()
@@ -179,9 +172,21 @@ pi[1] <- 0.46
 pi[2] <- 0.21
 pi[3] <- 0.33
 
-bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, H.total=H.total, pi=pi, ones = ones,
-                  H.total.mean=mean(H.total, na.rm=TRUE)
-)  
+H <- array(NA, dim = c(53,3,2))
+for(t in 1:53){
+  for(c in 1:3){
+    for(p in 1:2){
+      H[t,c,p] <- round(pi[c] * H.total[t,p])
+    }
+  }
+}
+
+H[52:53,1,] <- round(mean(H[,1,], na.rm = TRUE))
+H[52:53,2,] <- round(mean(H[,2,], na.rm = TRUE))
+H[52:53,3,] <- round(mean(H[,3,], na.rm = TRUE))
+
+
+bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, H=H, pi=pi)  
 
 # inits
 
@@ -256,7 +261,7 @@ inits <- function(){list(#H=H.inits,
 )} #,report=report.inits)}                 
 
 # Parameters monitored
-parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f")  # add to this before running!
+parameters <- c("sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd", "sa", "f", "N")  # add to this before running!
 
 # MCMC settings
 ni <- 1000
