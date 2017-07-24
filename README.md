@@ -16,7 +16,7 @@ population cycle by identifying time periods and locations where population grow
 
 *Permanent Identifier (e.g. DOI):* Work still in progress, permanent identified is to be determined.
 
-*Data Source:* Harvest data and singing ground survey data from public sites (include here). Banding data 
+*Data Source:* Harvest data and singing ground survey data from public sites (include here). Banding data  
 obtained at request from Bird Banding Lab.
 
 This project utilizes 3 datasets:  
