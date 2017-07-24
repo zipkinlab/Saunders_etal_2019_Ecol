@@ -73,7 +73,7 @@ Zimmerman et al. 2010, Paddinton et al. 10th AMWO Symposium
 
 **| When |**
 
-*Temporal Coverage:* 1963 - 2012.
+*Temporal Coverage:* 1963 - 2012
 
 *Publication Date:* Work still in progress, publication date to be determined.
 
