@@ -204,6 +204,7 @@ library(jagsUI)
 load(file="AMWO_harvest_wings_scaled_model_HPCC.Rda")
 #print(AMWO.harvest.wings.scaled.HPCC, digits=3)
 
+#load m-array for IPM and release array
 load(file="marrayAMWO.Rda")
 load(file="relAMWO.Rda")
 
@@ -216,14 +217,16 @@ cat("
     model {
     
     # Priors and constraints for population means and variances
-    
+    #first dimension is t, second dimension is season, third dimension is age-sex class [1=juv,2=male,3=female], last is population [1=eastern,2=central]
+    #NOTE: Values below are SCALED--divided by 10000 for all    
+
     # prior for initial pop sizes in spring               # informed prior based on Lincoln estimates
-    n[1,1,3,1] ~ dunif(100, 800)                  # initial size for female eastern (dnorm(600000,1E-10)). Scaled--divided by 10000 for all
-    n[1,1,3,2] ~ dunif(100, 800)                  # initial size for female central (dnorm(720000,1E-10))
-    n[1,1,2,1] ~ dunif(100, 800)                  # initial size for male eastern (dnorm(530000,1E-10))
-    n[1,1,2,2] ~ dunif(100, 800)                  # initial size for male central (dnorm(615000,1E-10))
-    n[1,1,1,1] <- n[1,1,3,1] * F[1,1]                     # initial size for juv eastern
-    n[1,1,1,2] <- n[1,1,3,2] * F[1,2]                     # initial size for juv central
+    n[1,1,3,1] ~ dunif(100, 800)                          # initial size for female eastern (dnorm(600000,1E-10))
+    n[1,1,3,2] ~ dunif(100, 800)                          # initial size for female central (dnorm(720000,1E-10))
+    n[1,1,2,1] ~ dunif(100, 800)                          # initial size for male eastern (dnorm(530000,1E-10))
+    n[1,1,2,2] ~ dunif(100, 800)                          # initial size for male central (dnorm(615000,1E-10))
+    n[1,1,1,1] <- n[1,1,3,1] * F[1,1]                     # initial size for juv eastern is function of female initial size
+    n[1,1,1,2] <- n[1,1,3,2] * F[1,2]                     # initial size for juv central is function of female initial size
     
     # round initial sizes
     N[1,1,3,1] <- round(n[1,1,3,1])
@@ -236,11 +239,11 @@ cat("
     for (p in 1:2){                                             # 1 Eastern, 2 Central
     # priors for fecundities
     F.x[p] ~ dunif(0, 4)                                        # logical bounds on fecundity (F) with 4 egg clutch 
-    F.sd[p] ~ dunif(0.01, 1) 
+    F.sd[p] ~ dunif(0.01, 1)                                    # Fecundity cannot be <0 or >4
     F.tau[p] <- pow(F.sd[p], -2)
     
-    for (t in 1:yrs){
-    F[t,p] ~ dnorm(F.x[p], F.tau[p])T(0,)                       # Fecundity cannot be <0 or >4
+    for (t in 1:yrs){                                           #yrs = 53
+    F[t,p] ~ dnorm(F.x[p], F.tau[p])T(0,)                       
 
     # deriving pi.sex for use in balance equations
     pi.sex[t,1,p] <- pi[t,2,p]/(pi[t,2,p]+pi[t,3,p])            # male to female proportion (pulling pi's from harvest model run above)
@@ -248,18 +251,18 @@ cat("
     
     } #t
     
-    for (c in 1:3){                       
-    sa.x[c,p] ~ dunif(0,1) 
+    for (c in 1:3){                                             #Priors for survival and recovery rates for each age-sex class and population
+    sa.x[c,p] ~ dunif(0,1)                                      #annual survival
     sa.mu[c,p] <- logit(sa.x[c,p])        
-    ss.x[c,p] ~ dunif(0,1) 
+    ss.x[c,p] ~ dunif(0,1)                                      #summer survival
     ss.mu[c,p] <- logit(ss.x[c,p])
-    f.x[c,p] ~ dunif(0,0.1) 
+    f.x[c,p] ~ dunif(0,0.1)                                     #recovery rate
     f.mu[c,p] <- logit(f.x[c,p])               
     
-    sa.sd[c,p] ~ dunif(0.05,2)                 # Priors for SDs of survival and recovery rates
+    sa.sd[c,p] ~ dunif(0.05,2)                                  # Priors for SDs of survival and recovery rates
     ss.sd[c,p] ~ dunif(0.05,2) 
     f.sd[c,p] ~ dunif(0.05,2) 
-    sa.tau[c,p] <- pow(sa.sd[c,p],-2)          # Express as precision
+    sa.tau[c,p] <- pow(sa.sd[c,p],-2)                           # Express as precision
     ss.tau[c,p] <- pow(ss.sd[c,p],-2) 
     f.tau[c,p] <- pow(f.sd[c,p],-2) 
     
@@ -269,32 +272,32 @@ cat("
     eps.ss[t,c,p] ~ dnorm(0,ss.tau[c,p])
     eps.f[t,c,p] ~ dnorm(0,f.tau[c,p])
     
-    logit(sa[t,c,p]) <- sa.mu[c,p] + eps.sa[t,c,p]         # annual survival (by year, cohort, pop)
-    logit(ss[t,c,p]) <- ss.mu[c,p] + eps.ss[t,c,p]         # seasonal survival (summer)
-    logit(f[t,c,p]) <- f.mu[c,p] + eps.f[t,c,p]            # Brownie recovery rate
+    logit(sa[t,c,p]) <- sa.mu[c,p] + eps.sa[t,c,p]             # annual survival (by year, age-sex class, pop)
+    logit(ss[t,c,p]) <- ss.mu[c,p] + eps.ss[t,c,p]             # seasonal survival (summer)
+    logit(f[t,c,p]) <- f.mu[c,p] + eps.f[t,c,p]                # Brownie recovery rate
     
     } # close t
     
     ## Balance equations, assuming estimating N in both seasons
     # Initial pop sizes in summer [t, s, c, p]
-    N[1,2,c,p] <- trunc(N[1,1,c,p]*ss[1,c,p])             # pop size in late summer is function of summer survival 
+    N[1,2,c,p] <- trunc(N[1,1,c,p]*ss[1,c,p])                  # pop size in late summer is function of summer survival 
     } #c
     
     for (t in 2:yrs){
-    N[t,1,1,p] <- trunc(N[t,1,3,p] * F[t,p])              # pop size of juv in spring = adF * mean fecundity
-    N[t,2,1,p] <- trunc(N[t,1,1,p]*ss[t,1,p])             # pop size of juv in late summer
-    sw[t,1,p] <- sa[t-1,1,p]/ss[t,1,p]                    # derived winter survival for juveniles
+    N[t,1,1,p] <- trunc(N[t,1,3,p] * F[t,p])                   # pop size of juv in spring = adF * mean fecundity
+    N[t,2,1,p] <- trunc(N[t,1,1,p] * ss[t,1,p])                # pop size of juv in late summer = juv * summer survival
+    sw[t,1,p] <- sa[t-1,1,p]/ss[t,1,p]                         # derived winter survival for juveniles (annual/summer)
     
     for (c in 2:3){
-    sw[t,c,p] <- sa[t-1,c,p]/ss[t,c,p]                                                      # derived winter survival for adults
+    sw[t,c,p] <- sa[t-1,c,p]/ss[t,c,p]                                                        # derived winter survival for adults
     N[t,1,c,p] <- trunc(N[t-1,2,c,p]*sw[t,c,p] + pi.sex[t,c-1,p]*N[t-1,2,1,p]*sw[t,1,p])      # pop size of adults in spring
-    N[t,2,c,p] <- trunc(N[t,1,c,p]*ss[t,c,p])                                               # pop size of adults in late summer 
+    N[t,2,c,p] <- trunc(N[t,1,c,p]*ss[t,c,p])                                                 # pop size of adults in late summer 
     } #c
     } #t 
     
     # Observation process, recoveries and harvest data
     # Recoveries
-    # Note: releases MUST be provided as data; we have saved as relAMWO
+    # Note: releases MUST be provided as data; saved as relAMWO
     for (c in 1:3){
     for (t in 1:yrs){
     marrayAMWO[t,1:(yrs+1),1,c,p] ~ dmulti(pr[t,,1,c,p], rel[t,1,c,p])        # Apr-Jun releases     
@@ -305,7 +308,7 @@ cat("
     pr[t,t,1,c,p] <- ss[t,c,p] * f[t,c,p]                  # spring banded birds must survive to start of hunting season
     pr[t,t,2,c,p] <- f[t,c,p]                              # survival assumed 1 if banded Jul-Sep
     
-    # monitor cumulative survival to start of next hunting season (previously surv; used in subsequent diagonals)
+    # monitor cumulative survival to start of next hunting season (used in subsequent diagonals)
     cumS[t,t,1,c,p] <- ss[t,c,p] * sa[t,c,p]
     cumS[t,t,2,c,p] <- sa[t,c,p]
     } # t
@@ -314,16 +317,16 @@ cat("
     for (t in 1:yrs){
     # Above main diagonal--indirect recovery in season [k > t]
     # All birds are adults now, no differences between Apr-Jun and Jul-Sep either
-    for (k in (t+1):yrs){                                                                       # k loop to represent next year (above main diagonal)
+    for (k in (t+1):yrs){                                                                           # k loop represents next year (above main diagonal)
     # recoveries
     pr[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*f[k,2,p] + pi.sex[t,2,p]*f[k,3,p])          # juvs as mixture of AdM & AdF
-    pr[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*f[k,2,p] + pi.sex[t,2,p]*f[k,3,p])          # pi.sex[1] is proportion male; pi.sex[2] is proportion female      
+    pr[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*f[k,2,p] + pi.sex[t,2,p]*f[k,3,p])          # pi.sex[1] is proportion male; pi.sex[2] is proportion female as esimated from harvest model run      
     pr[t,k,1,2,p] <- cumS[t,k-1,1,2,p] * f[k,2,p] 
     pr[t,k,2,2,p] <- cumS[t,k-1,2,2,p] * f[k,2,p] 
     pr[t,k,1,3,p] <- cumS[t,k-1,1,3,p] * f[k,3,p] 
     pr[t,k,2,3,p] <- cumS[t,k-1,2,3,p] * f[k,3,p] 
     # monitor cumulative survival to start of next hunting period
-    cumS[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + pi.sex[t,2,p]*sa[k,3,p]) # juvs as mixture AdM & AdF
+    cumS[t,k,1,1,p] <- cumS[t,k-1,1,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + pi.sex[t,2,p]*sa[k,3,p])      # juvs as mixture AdM & AdF
     cumS[t,k,2,1,p] <- cumS[t,k-1,2,1,p] * (pi.sex[t,1,p]*sa[k,2,p] + pi.sex[t,2,p]*sa[k,3,p]) 
     cumS[t,k,1,2,p] <- cumS[t,k-1,1,2,p] * sa[k,2,p]
     cumS[t,k,2,2,p] <- cumS[t,k-1,2,2,p] * sa[k,2,p]
@@ -332,7 +335,7 @@ cat("
     } #k
     
     # Left of main diag
-    for (l in 1:(t-1)){           #l loop for previous year (left of main diagonal)                    
+    for (l in 1:(t-1)){                               # l loop for previous year (left of main diagonal)                    
     pr[t,l,1,1,p] <- 0
     pr[t,l,1,2,p] <- 0
     pr[t,l,1,3,p] <- 0
@@ -350,14 +353,14 @@ cat("
     pr[t,(yrs+1),2,3,p] <- 1-sum(pr[t,1:yrs,2,3,p])
     } #t
     
-    # Bringing in harvest proportion data estimated from harvest model separately
+    # Bringing in harvest proportion data (H) estimated from harvest model separately
     for (t in 1:yrs){ 
     for (c in 1:3){
     H[t,c,p] ~ dbin(h[t,c,p], N[t,2,c,p])
     
-    h[t,c,p] <- f[t,c,p]/report[t]                    # harvest rate (h) is recovery rate divided by reporting rate (p)                                                      
+    h[t,c,p] <- f[t,c,p]/report[t]                    # harvest rate (h) is recovery rate (f) divided by reporting rate (report)                                                      
     
-    } #c                                              # note!! reporting rate now a vector of 0.506 and 0.8 when toll free bands started in 2001 (not just 0.506)
+    } #c                                              # note! reporting rate now a vector of 0.506 and 0.8 when toll free bands started in 2001
     } #t           
     } #p
     } # end bugs model
@@ -366,8 +369,8 @@ sink()
 
 # Bundle data
 # Data to be pulled in from separate harvest model
-H <- array(NA, dim = c(53,3,2))
-pi <- array(NA, dim=c(53,3,2))
+H <- array(NA, dim = c(53,3,2))                   # Harvest proportion data
+pi <- array(NA, dim=c(53,3,2))                    # male:female proportion data
 
 for(c in 1:3){
   for(p in 1:2){
@@ -393,7 +396,7 @@ report<-c(0.506,rep(0.506,37),0.8,rep(0.8,14))
 bugs.data <- list(yrs=dim(marrayAMWO)[1], marrayAMWO=marrayAMWO, rel=relAMWO, H=H, pi=pi, report=report)  
 
 # inits
-n.inits <- array(NA, dim=c(1,1,3,2))     #scale these inits by dividing by 10000
+n.inits <- array(NA, dim=c(1,1,3,2))     #scaled these inits by dividing by 10000
 n.inits[1,1,3,1] <- 300
 n.inits[1,1,3,2] <- 400
 n.inits[1,1,2,1] <- 250
@@ -404,18 +407,19 @@ inits <- function(){list(
 )}               
 
 # Parameters monitored
-parameters <- c("sa", "f", "N","sa.x", "ss.x", "f.x", "sa.sd", "ss.sd", "f.sd")  # anything else to include? h?
+parameters <- c("sa", "f", "ss", "F","N","sa.x", "ss.x", "f.x", "F.x", "sa.sd", "ss.sd", "f.sd", "F.sd")  # include h? sw?
 
-# MCMC settings
-ni <- 350000
+# MCMC settings (all params converge with these settings upon quick glance)
+ni <- 400000
 nt <- 10
-nb <- 300000
+nb <- 350000
 nc <- 3
+na <- 10000
 
 # Run JAGS
-AMWO.combo.jags <- jagsUI(bugs.data, inits=inits, parameters, "Lincoln.Brownie.Simple2.6April.jags", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel=TRUE, store.data=TRUE)
-save(AMWO.combo.jags, file="AMWO_Lincoln_Brownie_Combo_6May2017.Rda")
-#load(file="AMWO_Lincoln_Brownie_Combo_6May2017.Rda")
+AMWO.combo.jags <- jagsUI(bugs.data, inits=inits, parameters, "Lincoln.Brownie.Simple2.6April.jags", n.adapt = na, n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, parallel=TRUE, store.data=TRUE)
+save(AMWO.combo.jags, file="AMWO_Lincoln_Brownie_Combo_Sept2017.Rda")
+#load(file="AMWO_Lincoln_Brownie_Combo_Sept2017.Rda")
 #print(AMWO.combo.jags$summary, digits=3)
 
 #y <- c(AMWO.combo.jags$mean$N[1:53,1,2,1])
