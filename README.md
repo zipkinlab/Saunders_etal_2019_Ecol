@@ -1,8 +1,6 @@
 # timberdoodle
 This is a repository for an American woodcock integrated population model. It is a work in progress by members of the Zipkin Lab for the  Reproducible Quantitative Methods course.
 
-Find the work-in-progress manuscript here: https://docs.google.com/document/d/1Fom0MwXBo0vrve31j34HdIShhEXJEKpuROH5x5x5ZYc/edit?usp=sharing
-
 ---
 
 **| What |**
