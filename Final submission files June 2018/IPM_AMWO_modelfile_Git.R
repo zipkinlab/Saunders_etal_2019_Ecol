@@ -1,14 +1,15 @@
 #--------------------------------------------------------------------
-#American woodcock integrated population model
-#Code by Saunders et al.
-#January 2017 - December 2017
-#Submitted & in review at Ecology
+# American woodcock integrated population model
+# Code by Saunders et al.
+# January 2017 - December 2017
+# Submitted & in review at Ecology
 #--------------------------------------------------------------------
 
 #load jagsUI
 library(jagsUI)
 
 # Load data objects for HPCC run
+    #Harvest estimates from Harvest model
 load(file="AMWO_harvest_pi_Oct2017.Rda")
 #load m-array for IPM and release array
 load(file="marrayAMWO.Rda")
@@ -269,7 +270,7 @@ inits <- function(){list(
 # Parameters monitored
 parameters <- c("sa", "f", "ss", "F","N","sa.x", "ss.x", "f.x", "F.x", "sa.sd", "ss.sd", "f.sd", "F.sd", "N.tot.sp", "N.tot.sum", "sw", "r", "mu", "sd.N", "sd.sgs")  # include h?
 
-# MCMC settings (all params converge with these settings upon quick glance)
+# MCMC settings (all params converge with these settings)
 ni <- 400000
 nt <- 10
 nb <- 350000
