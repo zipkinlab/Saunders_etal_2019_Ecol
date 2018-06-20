@@ -73,6 +73,7 @@ clean[raw$B.Flyway==6&raw$BRegion..STA%in%c("ONT","MB"),4]<-2  ## 19 from ONT, a
 clean[,5]<-0 #specify different number from previous step to flag it in the next step
 clean[raw$R.Flyway==1,5]<-1
 clean[raw$R.Flyway%in%2:3,5]<-2
+#incorporating the Canadian provinces (Flyway=6) to their corresponding US regions
 clean[raw$R.Flyway==6&raw$RRegion..STA%in%c("QC","NS","NB","PE","NF","PQ"),5]<-1
 clean[raw$R.Flyway==6&raw$RRegion..STA%in%c("ONT", "MB"),5]<-2
 
