@@ -34,9 +34,9 @@ This project utilizes 3 datasets:
 
 ### Contact
 Funded by University of Minnesota, Migratory Shore and Upland Game Bird Grant (USFWS Webless Migratory Game Bird Research and Management Program).  
-&nbsp;&nbsp;PI: Dr. Todd Arnold  
-&nbsp;&nbsp;&nbsp;&nbsp;Department of Fisheries, Wildlife, and Conservation Biology  
-&nbsp;&nbsp;&nbsp;&nbsp;University of Minnesota  
-&nbsp;&nbsp;&nbsp;&nbsp;St. Paul, MN 55108  
-&nbsp;&nbsp;&nbsp;&nbsp;612-624-2220  
-&nbsp;&nbsp;&nbsp;&nbsp;arnol065@umn.edu  
+&nbsp;&nbsp;&nbsp;&nbsp;PI: Dr. Todd Arnold  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Department of Fisheries, Wildlife, and Conservation Biology  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;University of Minnesota  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;St. Paul, MN 55108  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;612-624-2220  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arnol065@umn.edu  
