@@ -10,9 +10,9 @@ A common challenge for studying wildlife populations occurs when different obser
 ### Code 
 File Name | File Location | File Description
 --- | --- | ---
-Data_manip_AMWO_marray_Git.R 	| Final submission files June 2018  |
-IPM_AMWO_modelfile_Git.R 	| Final submission files June 2018  |
-AMWO_harvest_Git.R 		| Final submission files June 2018  |
+Data_manip_AMWO_marray_Git.R 	| _Final submission files June 2018_ folder  |  Data managment and manipulation code of Banding data to create m-arrays for band-recovery model component of the IPM
+IPM_AMWO_modelfile_Git.R 	| _Final submission files June 2018_ folder  |
+AMWO_harvest_Git.R 		| _Final submission files June 2018_ folder  |
 
 
 
