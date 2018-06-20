@@ -1,7 +1,7 @@
 #--------------------------------------------------------------------------------------------------------------
-#American woodcock harvest model, part of AMWO IPM
-#Code written by Saunders et al. January 2017 - December 2017
-# Estimating annual harvest of AMWO during duck stamp years using annual sales as a covariate
+# American woodcock harvest model, part of AMWO IPM
+# Code written by Saunders et al. January 2017 - December 2017
+# Estimating annual harvest of AMWO during duck stamp surveys, harvest information program, and parts-collection survey
 #--------------------------------------------------------------------------------------------------------------
 
 library(jagsUI)
