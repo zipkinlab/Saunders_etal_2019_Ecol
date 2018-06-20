@@ -10,11 +10,9 @@ A common challenge for studying wildlife populations occurs when different obser
 ### Code 
 File Name | File Location | File Description
 --- | --- | ---
-Data_manip_AMWO_marray_Git.R 	| _Final submission files June 2018_ folder  |  Data managment and manipulation code of Banding data to create m-arrays for band-recovery model component of the IPM
-IPM_AMWO_modelfile_Git.R 	| _Final submission files June 2018_ folder  |
-AMWO_harvest_Git.R 		| _Final submission files June 2018_ folder  |
-
-
+Data_manip_AMWO_marray_Git.R 	| _Final submission files June 2018_ folder  |  Data managment and manipulation code of Banding data to create m-arrays for band-recovery model component of the IPM. 
+AMWO_harvest_Git.R 		| _Final submission files June 2018_ folder  |  Data manipulation of harvest data (Duck Stamp Survey, Harvest Information Program, and Parts-collection Surveys) and JAGS model file and R code for estimation of annual woodcock harvest throughought temporal and spatial range of the study.
+IPM_AMWO_modelfile_Git.R 	| _Final submission files June 2018_ folder  | JAGS model file for bayesian implementation of the Integrated Population model to estimate population dynamics and trends of the Eastern and Central US woodcock populations from 1963-2015.
 
 
 
