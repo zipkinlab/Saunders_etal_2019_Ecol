@@ -30,7 +30,7 @@ This project utilizes 3 datasets:
 &nbsp;&nbsp;Website: https://migbirdapps.fws.gov/
 
 ### Contact
-Funded by University of Minnesota, Migratory Shore and Upland Game Bird Grant (USFWS Webless Migratory Game Bird Research and Management Program).  
+Funded by a Migratory Shore and Upland Game Bird Grant (USFWS Webless Migratory Game Bird Research and Management Program).  
 &nbsp;&nbsp;&nbsp;&nbsp;PI: Dr. Todd Arnold  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Department of Fisheries, Wildlife, and Conservation Biology  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;University of Minnesota  
