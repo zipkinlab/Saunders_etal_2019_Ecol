@@ -1,6 +1,6 @@
 # Disentangling data discrepancies and deficiencies with integrated population models
 
-### Sarah P. Saunders, Matthew T. Farr, Alexander D. Wright, Christie A. Bahlai, Jose W. Ribeiro Jr., Sam Rossman, Allison L. Sussman, Todd W. Arnold, & Elise F. Zipkin
+### Sarah P. Saunders, Matthew T. Farr, Alexander D. Wright, Christie A. Bahlai, José W. Ribeiro Jr., Sam Rossman, Allison L. Sussman, Todd W. Arnold, & Elise F. Zipkin
 
 ### Ecology
 
