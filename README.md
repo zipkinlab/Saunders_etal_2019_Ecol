@@ -4,7 +4,7 @@
 
 ### Ecology (*In Press*)
 
-### Code/Data DOI: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2532020.svg)](https://doi.org/10.5281/zenodo.2532020)
+### Code/Data DOI: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2532006.svg)](https://doi.org/10.5281/zenodo.2532006)
 
 ### Please contact the first author for questions about the code or data: Sarah P. Saunders (sarahpsaunders@gmail.com)
 __________________________________________________________________________________________________________________________________________
