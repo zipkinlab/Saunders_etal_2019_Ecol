@@ -2,7 +2,9 @@
 
 ### Sarah P. Saunders, Matthew T. Farr, Alexander D. Wright, Christie A. Bahlai, José W. Ribeiro Jr., Sam Rossman, Allison L. Sussman, Todd W. Arnold, & Elise F. Zipkin
 
-### Ecology
+### Ecology (*In Press*)
+
+### Code/Data DOI: [![DOI](https://zenodo.org/badge/79567183.svg)](https://zenodo.org/badge/latestdoi/79567183)
 
 ### Please contact the first author for questions about the code or data: Sarah P. Saunders (sarahpsaunders@gmail.com)
 __________________________________________________________________________________________________________________________________________
