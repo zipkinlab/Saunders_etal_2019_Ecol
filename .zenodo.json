@@ -2,7 +2,7 @@
     "description": "<p>This is archived code for the paper entitled 'Disentangling data discrepancies with integrated population models' published in Ecology in 2019.</p>", 
     "license": "other-open", 
     "title": "saund123/Saunders_etal_2019_Ecol: Archived data/code", 
-    "version": "v1.0.0", 
+    "version": "v1.0.2", 
     "upload_type": "software", 
     "publication_date": "2019-01-04", 
     "creators": [ 
@@ -15,7 +15,7 @@
     "related_identifiers": [
         {
             "scheme": "url", 
-            "identifier": "https://github.com/saund123/Saunders_etal_2019_Ecol/tree/v1.0.0", 
+            "identifier": "https://github.com/saund123/Saunders_etal_2019_Ecol/tree/v1.0.2", 
             "relation": "isSupplementTo"
         }, 
         {
