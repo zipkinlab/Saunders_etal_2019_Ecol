@@ -2,26 +2,13 @@
     "description": "<p>This is archived code for the paper entitled 'Disentangling data discrepancies with integrated population models' published in Ecology in 2019.</p>", 
     "license": "other-open", 
     "title": "saund123/Saunders_etal_2019_Ecol: Archived data/code", 
-    "version": "v1.0.3", 
+    "version": "v1.0.4", 
     "upload_type": "software", 
     "publication_date": "2019-01-04", 
     "creators": [ 
         {
             "affiliation": "National Audubon Society & Michigan State University", 
             "name": "Sarah Saunders"
-        }
-    ], 
-    "access_right": "open", 
-    "related_identifiers": [
-        {
-            "scheme": "url", 
-            "identifier": "https://github.com/saund123/Saunders_etal_2019_Ecol/tree/v1.0.3", 
-            "relation": "isSupplementTo"
-        }, 
-        {
-            "scheme": "doi", 
-            "identifier": "10.5281/zenodo.2532007", 
-            "relation": "isVersionOf"
         }
     ]
 }
