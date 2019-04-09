@@ -1,4 +1,4 @@
-# Disentangling data discrepancies with integrated population models
+# [Disentangling data discrepancies with integrated population models](https://esajournals.onlinelibrary.wiley.com/doi/10.1002/ecy.2714)
 
 ### Sarah P. Saunders, Matthew T. Farr, Alexander D. Wright, Christie A. Bahlai, José W. Ribeiro Jr., Sam Rossman, Allison L. Sussman, Todd W. Arnold, & Elise F. Zipkin
 
