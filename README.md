@@ -37,13 +37,13 @@ Website: https://migbirdapps.fws.gov/
 
 ## Raw data files
 
-1) AMWO bandings: The USGS Bird Banding Laboratory has compiled banding data for woodcocks over the complete timeframe of our study period (1963 – 2015).
+1) [AMWO bandings](https://github.com/zipkinlab/Saunders_etal_2019_Ecol/blob/master/Raw_Data/AMWO%20bandings.csv): The USGS Bird Banding Laboratory has compiled banding data for woodcocks over the complete timeframe of our study period (1963 – 2015).
 
-2) AMWO recoveries: The USGS Bird Banding Laboratory has compiled recovery data for woodcocks over the complete timeframe of our study period (1963 – 2015).
+2) [AMWO recoveries](https://github.com/zipkinlab/Saunders_etal_2019_Ecol/blob/master/Raw_Data/AMWO%20recoveries.csv): The USGS Bird Banding Laboratory has compiled recovery data for woodcocks over the complete timeframe of our study period (1963 – 2015).
 
-3) Harvest model data: Model-based estimates from our harvest model using Duck Stamp Survey (1963 - 2001) and Harvest Information Program data (1999 - 2015) on American woodcock.
+3) [Harvest model data](https://github.com/zipkinlab/Saunders_etal_2019_Ecol/blob/master/Raw_Data/Harvest_model_data.Rda): Model-based estimates from our harvest model using Duck Stamp Survey (1963 - 2001) and Harvest Information Program data (1999 - 2015) on American woodcock.
 
-4) SGS indices: Singing-ground Survey indices of American woodcock during 1968 - 2015 from US Fish and Wildlife Service,
+4) [SGS indices](https://github.com/zipkinlab/Saunders_etal_2019_Ecol/blob/master/Raw_Data/SGS-indices.csv): Singing-ground Survey indices of American woodcock during 1968 - 2015 from US Fish and Wildlife Service,
 
 ## Data files produced from models and referred to in the code:
 
