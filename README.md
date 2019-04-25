@@ -34,3 +34,21 @@ Website: https://migbirdapps.fws.gov/
 Description: Survey of numerous routes throughout the range of woodcocks to survey singing males during the spring.   	
 Contact: USFWS Migratory Bird Data Center  
 Website: https://migbirdapps.fws.gov/  
+
+## Raw data files
+
+1) AMWO bandings: The USGS Bird Banding Laboratory has compiled banding data for woodcocks over the complete timeframe of our study period (1963 – 2015).
+
+2) AMWO recoveries: The USGS Bird Banding Laboratory has compiled recovery data for woodcocks over the complete timeframe of our study period (1963 – 2015).
+
+3) Harvest model data: Model-based estimates from our harvest model using Duck Stamp Survey (1963 - 2001) and Harvest Information Program data (1999 - 2015) on American woodcock.
+
+4) SGS indices: Singing-ground Survey indices of American woodcock during 1968 - 2015 from US Fish and Wildlife Service,
+
+## Data files produced from models and referred to in the code:
+
+1) AMWO marray: a multidimensional band-recovery array (referred to as an ‘m-array’) consisting of 12 subcomponent arrays
+
+2) relAMWO: a separate array of total birds banded during each year, banding period, stage-sex class, and population unit, which was provided as data to the model
+
+3) AMWO harvest pi Oct 2017: the saved model output from the full IPM model run, used to create figures and results visualizations
