@@ -52,3 +52,5 @@ Website: https://migbirdapps.fws.gov/
 2) relAMWO: a separate array of total birds banded during each year, banding period, stage-sex class, and population unit, which was provided as data to the model
 
 3) AMWO harvest pi Oct 2017: the saved model output from the full IPM model run, used to create figures and results visualizations
+
+4) AMWO pop sizes: Annual population size estimates from our IPM for both Central and Eastern management units during 1963 - 2015. Note that estimates are in the millions (the scale of estimates shown in Figure 2).
