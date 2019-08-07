@@ -53,5 +53,5 @@ Website: https://migbirdapps.fws.gov/
 
 3) AMWO harvest pi Oct 2017: the saved model output from the full IPM model run, used to create figures and results visualizations
 
-4) [AMWO pop sizes](https://github.com/zipkinlab/Saunders_etal_2019_Ecol/blob/master/AMWO_popsizes_precision.csv): Annual population size estimates and associated 95% credible intervals from our IPM for both Central and Eastern management units during 1963 - 2015. Note that estimates are in the millions (the scale of estimates shown in Figure 2).
+4) [AMWO popsizes_precision](https://github.com/zipkinlab/Saunders_etal_2019_Ecol/blob/master/AMWO_popsizes_precision.csv): Annual population size estimates and associated 95% credible intervals from our IPM for both Central and Eastern management units during 1963 - 2015. Note that estimates are in the millions (the scale of estimates shown in Figure 2).
 
